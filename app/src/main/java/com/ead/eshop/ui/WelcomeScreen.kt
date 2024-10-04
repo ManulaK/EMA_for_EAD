@@ -41,14 +41,14 @@ fun WelcomeScreen(navController: NavController) {
                 .fillMaxWidth()
                 .padding(24.dp)
         ) {
-            Spacer(modifier = Modifier.height(60.dp))
+            Spacer(modifier = Modifier.height(10.dp))
             Image(
                 painter = painterResource(R.drawable.welcome2),
                 contentDescription = "App Logo",
                 modifier = Modifier.size((screenWidth * 2.5f).coerceAtMost(350.dp)),
 
             )
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
             Text(
                 text = "Welcome to E-Shop",
@@ -63,21 +63,17 @@ fun WelcomeScreen(navController: NavController) {
 
             Text(
                 text ="Discover the best products and deals at your fingertips." +
-                        "Shop from a wide range of categories," +
-                        " Whether you're looking for the latest trends or exclusive discounts," +
                         " we've got something for everyone. Start your shopping journey now and experience convenience like never before!"
                 ,
                 style = MaterialTheme.typography.bodySmall.copy(
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 16.sp,
-                    lineHeight = 25.sp
+                    lineHeight = 20.sp
                 ),
 
                 textAlign = TextAlign.Center,
                 color = Color.Gray
             )
         }
-
+        Spacer(modifier = Modifier.height(8.dp))
         // Buttons at the bottom
         Column(
             modifier = Modifier

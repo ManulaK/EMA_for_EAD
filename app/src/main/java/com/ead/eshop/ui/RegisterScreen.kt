@@ -1,7 +1,6 @@
 package com.ead.eshop.ui
 
 import android.widget.Toast
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -16,11 +15,9 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -32,10 +29,8 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.ead.eshop.AppRoutes
-import com.ead.eshop.R
 import com.ead.eshop.utils.Resource
 import com.ead.eshop.viewmodels.RegisterViewModel
-
 
 
 @Composable
@@ -52,6 +47,8 @@ fun <T> RegisterScreen(navController: NavController, registerViewModel: Register
     val configuration = LocalConfiguration.current
     val screenWidth = configuration.screenWidthDp.dp
     val screenHeight = configuration.screenHeightDp.dp
+
+    val context = LocalContext.current
 
     Column(
         modifier = Modifier
@@ -145,7 +142,7 @@ fun <T> RegisterScreen(navController: NavController, registerViewModel: Register
                     registerViewModel.registerUser(email, password)
                 } else {
                     // Handle mismatch passwords, maybe show a message to the user
-//                    Toast.makeText(LocalContext.current, "Passwords do not match", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, "Passwords do not match", Toast.LENGTH_SHORT).show()
                 }
             },
             modifier = Modifier
@@ -182,8 +179,9 @@ fun <T> RegisterScreen(navController: NavController, registerViewModel: Register
             }
             is Resource.Success -> {
                 LaunchedEffect(Unit) {
-//                    Toast.makeText(LocalContext.current, "Registration Successful", Toast.LENGTH_SHORT).show()
-                    navController.navigate(AppRoutes.loginScreen)  // Navigate to login on success
+
+                    Toast.makeText(context, "Registration Successful", Toast.LENGTH_SHORT).show()
+                    navController.navigate(AppRoutes.loginScreen)
                 }
             }
             is Resource.Error -> {
