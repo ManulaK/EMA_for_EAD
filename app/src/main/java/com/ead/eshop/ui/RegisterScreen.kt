@@ -171,7 +171,6 @@ fun <T> RegisterScreen(navController: NavController, registerViewModel: Register
             )
         }
 
-        // Handle the registration states
         when (registerState) {
             is Resource.Loading -> {
                 CircularProgressIndicator()
