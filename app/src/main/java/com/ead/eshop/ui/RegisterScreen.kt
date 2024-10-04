@@ -141,7 +141,6 @@ fun <T> RegisterScreen(navController: NavController, registerViewModel: Register
                 if (password == repeatPassword) {
                     registerViewModel.registerUser(email, password)
                 } else {
-                    // Handle mismatch passwords, maybe show a message to the user
                     Toast.makeText(context, "Passwords do not match", Toast.LENGTH_SHORT).show()
                 }
             },
