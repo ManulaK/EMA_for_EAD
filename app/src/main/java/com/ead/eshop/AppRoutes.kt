@@ -1,12 +1,14 @@
 package com.ead.eshop
 
 object AppRoutes {
-    var welcomeScreen = "welcomeScreen"
-    var loginScreen = "loginScreen"
-    var registerScreen = "registerScreen"
-
-    const val productListScreen = "product_list"
-    const val productDetailsScreen = "product_details/{productId}" // Dynamic route for product details
+    const val welcomeScreen = "welcomeScreen"
+    const val loginScreen = "loginScreen"
+    const val registerScreen = "registerScreen"
+    const val homeScreen = "homeScreen"
+    const val productDetailsScreen = "product_details/{productId}"
     const val cartScreen = "cart"
     const val checkoutScreen = "checkout"
+    const val profileScreen = "profileScreen"
+    const val settingsScreen = "settingsScreen"
+    const val orderScreen = "orderScreen"
 }

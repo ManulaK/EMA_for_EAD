@@ -82,7 +82,7 @@ fun LoginScreen(navController: NavController, loginViewModel: LoginViewModel = v
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(bottom = 16.dp),
-            shape = RoundedCornerShape(12.dp)
+            shape = RoundedCornerShape(10.dp)
         )
 
         OutlinedTextField(
@@ -105,7 +105,7 @@ fun LoginScreen(navController: NavController, loginViewModel: LoginViewModel = v
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(bottom = 16.dp),
-            shape = RoundedCornerShape(12.dp)
+            shape = RoundedCornerShape(10.dp)
         )
 
         Button(
@@ -155,7 +155,7 @@ fun LoginScreen(navController: NavController, loginViewModel: LoginViewModel = v
                         // Save token to DataStore
                         TokenManager.saveToken(navController.context, it)
                         // Navigate to the product list screen after saving the token
-                        navController.navigate(AppRoutes.productListScreen)
+                        navController.navigate(AppRoutes.homeScreen)
                     }
                 }
             }

@@ -1,11 +1,13 @@
 package com.ead.eshop
 
+import OrderScreen
 import android.util.Log
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
@@ -15,28 +17,30 @@ import androidx.navigation.compose.rememberNavController
 import com.ead.eshop.ui.CartScreen
 import com.ead.eshop.ui.CheckoutScreen
 import com.ead.eshop.ui.LoginScreen
-import com.ead.eshop.ui.Product
+
 import com.ead.eshop.ui.ProductDetailsScreen
 import com.ead.eshop.ui.HomeScreen
-import com.ead.eshop.ui.RegisterScreen
 import com.ead.eshop.ui.WelcomeScreen
-import com.ead.eshop.ui.sampleProducts
 
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.ead.eshop.data.model.Product
+import com.ead.eshop.ui.ProfileScreen
+import com.ead.eshop.ui.RegisterScreen
+import com.ead.eshop.ui.SettingsScreen
+import com.ead.eshop.viewmodels.ProductViewModel
 import kotlinx.coroutines.launch
 
 @Composable
-fun AppNavigation() {
+fun AppNavigation(productViewModel: ProductViewModel) {
     val navController = rememberNavController()
-    val cartItems = remember { mutableStateListOf<Product>() }
+    val cartItems = remember { mutableStateListOf<Pair<Product, Int>>() }
 
-    // Using coroutine scope to retrieve the token
     val scope = rememberCoroutineScope()
-    // Use mutableStateOf to hold the token
+
+    // Token and loading logic (same as before)
     var token by remember { mutableStateOf<String?>(null) }
     var isLoading by remember { mutableStateOf(true) }
 
@@ -44,7 +48,7 @@ fun AppNavigation() {
         scope.launch {
             TokenManager.getToken(navController.context).collect { retrievedToken ->
                 token = retrievedToken
-                isLoading = false // Set loading to false after retrieving the token
+                isLoading = false
                 Log.d("LoginScreen", "Token: $token")
             }
         }
@@ -52,23 +56,22 @@ fun AppNavigation() {
 
     // Show a loading screen until token is retrieved
     if (isLoading) {
-        // Centered Loading Indicator
         Box(
             modifier = Modifier
                 .fillMaxSize(),
-            contentAlignment = Alignment.Center // Center the content
+            contentAlignment = Alignment.Center
         ) {
-            CircularProgressIndicator(
-                modifier = Modifier.size(64.dp), // Set a larger size for the indicator
-                strokeWidth = 8.dp // Optionally increase the stroke width
-            )
+                CircularProgressIndicator(
+                    color = MaterialTheme.colorScheme.surfaceContainer,
+                    modifier = Modifier.size(24.dp)
+                )
         }
         return
     }
 
     NavHost(
         navController = navController,
-        startDestination = if (token.isNullOrEmpty()) AppRoutes.welcomeScreen else AppRoutes.productListScreen
+        startDestination = if (token.isNullOrEmpty()) AppRoutes.welcomeScreen else AppRoutes.homeScreen
     ) {
         composable(route = AppRoutes.welcomeScreen) {
             WelcomeScreen(navController)
@@ -79,41 +82,67 @@ fun AppNavigation() {
         composable(route = AppRoutes.registerScreen) {
             RegisterScreen<Any>(navController)
         }
-        composable(route = AppRoutes.productListScreen) {
+        composable(route = AppRoutes.homeScreen) {
             HomeScreen(
-                products = sampleProducts,
+                navController = navController,
+                productViewModel = productViewModel,
                 onProductClick = { product ->
-                    navController.navigate("product_details/${product.id}") // Navigate to details screen
-                },
-                navController = navController // Pass NavController for logout navigation
+                    navController.navigate("product_details/${product.id}")
+                }
             )
         }
-
-
         composable(route = AppRoutes.productDetailsScreen) { backStackEntry ->
             val productId = backStackEntry.arguments?.getString("productId")?.toIntOrNull()
-            val product = sampleProducts.find { it.id == productId }
+            val product = productViewModel.products.value?.data?.find { it.id == productId }
             if (product != null) {
-                ProductDetailsScreen(product = product) {
-                    cartItems.add(product)
-                    navController.navigate(AppRoutes.cartScreen)
+                ProductDetailsScreen(
+                    product = product,
+                    navController = navController
+                ) { product, quantity ->
+                    cartItems.add(product to quantity)
                 }
             }
         }
+
+        // Pass cart items to CartScreen
         composable(route = AppRoutes.cartScreen) {
             CartScreen(
                 cartItems = cartItems,
-                onCheckout = { navController.navigate(AppRoutes.checkoutScreen) },
+                onCheckout = {
+                    navController.navigate(AppRoutes.checkoutScreen)
+                },
                 onProductClick = { product ->
                     navController.navigate(AppRoutes.productDetailsScreen + "/${product.id}")
+                },
+                onRemoveItem = { product ->
+                    // Logic to remove item from cart, or update state
+
+                },
+                navController = navController
+            )
+        }
+
+
+        // Checkout page logic
+        composable(route = AppRoutes.checkoutScreen) {
+            CheckoutScreen(
+                cartItems = cartItems,
+                onClearCart = {
+                    cartItems.clear()
+                    navController.navigate(AppRoutes.homeScreen)
                 }
             )
         }
-        composable(route = AppRoutes.checkoutScreen) {
-            CheckoutScreen {
-                cartItems.clear()
-                navController.navigate(AppRoutes.productListScreen)
-            }
+        composable(route = AppRoutes.profileScreen) {
+            ProfileScreen(navController)
+        }
+        composable(route = AppRoutes.settingsScreen) {
+            SettingsScreen(navController)
+        }
+        composable(route = AppRoutes.orderScreen) {
+            OrderScreen(navController)
         }
     }
 }
+
+

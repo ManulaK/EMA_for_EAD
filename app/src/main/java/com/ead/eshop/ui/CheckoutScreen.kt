@@ -16,25 +16,21 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.ead.eshop.data.model.Product
 
 @Composable
-fun CheckoutScreen(
-    onPlaceOrder: () -> Unit
-) {
+fun CheckoutScreen(cartItems: List<Pair<Product, Int>>, onClearCart: () -> Unit) {
     Column(
-        Modifier.fillMaxSize().padding(16.dp),
+        modifier = Modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Text(text = "Checkout", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimaryContainer)
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Button(
-            onClick = onPlaceOrder,
-            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.onPrimaryContainer)
-        ) {
-            Text(text = "Place Order", color = Color.White)
+        Text("Thank you for your purchase!", fontSize = 24.sp)
+        Button(onClick = {
+            onClearCart()
+        }) {
+            Text("Back to Home")
         }
     }
 }

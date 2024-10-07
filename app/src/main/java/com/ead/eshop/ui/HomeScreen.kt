@@ -1,133 +1,424 @@
 package com.ead.eshop.ui
 
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.constraintlayout.compose.ConstraintLayout
+import androidx.constraintlayout.compose.Dimension
 import androidx.navigation.NavController
+import coil.compose.rememberAsyncImagePainter
 import com.ead.eshop.AppRoutes
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-
-
-data class Product(
-    val id: Int,
-    val name: String,
-    val description: String,
-    val price: Double,
-    val category: String,
-    val imageUrl: String
-)
-
-val sampleProducts = listOf(
-    Product(1, "Smartphone", "Latest model", 699.99, "Electronics", "image_url_1"),
-    Product(2, "Laptop", "High performance laptop", 1199.99, "Electronics", "image_url_2"),
-    Product(3, "T-shirt", "Comfortable cotton", 29.99, "Fashion", "image_url_3"),
-    Product(4, "Novel", "Bestselling book", 19.99, "Books", "image_url_4")
-)
-
+import com.ead.eshop.R
+import com.ead.eshop.data.model.Product
+import com.ead.eshop.ui.components.AppBar
+import com.ead.eshop.utils.Resource
+import com.ead.eshop.viewmodels.ProductViewModel
+import java.util.Locale
 
 @Composable
 fun HomeScreen(
-    products: List<Product>,
-    onProductClick: (Product) -> Unit,
-    navController: NavController
+    navController: NavController,
+    productViewModel: ProductViewModel,
+    onProductClick: (Product) -> Unit
 ) {
-    val categories = listOf("All", "Electronics", "Fashion", "Books")
+    LaunchedEffect(Unit) {
+        productViewModel.fetchProducts()
+        productViewModel.fetchCategories()
+    }
+
+    val productState by productViewModel.products.observeAsState()
+    val categoryState by productViewModel.categories.observeAsState()
+
     var selectedCategory by remember { mutableStateOf("All") }
     var searchQuery by remember { mutableStateOf("") }
+    val topBarVisibilityState = remember { mutableStateOf(true) }
 
-    Column(modifier = Modifier.fillMaxSize()) {
-        // Logout Button
-        Button(
-            onClick = {
-                CoroutineScope(Dispatchers.IO).launch {
-                    TokenManager.clearToken(navController.context)
-
-                    withContext(Dispatchers.Main) {
-                        navController.navigate(AppRoutes.welcomeScreen) {
-                            popUpTo(AppRoutes.welcomeScreen) { inclusive = true }
-                        }
-                    }
-                }// Call the logout function to remove token and navigate
-            },
-            modifier = Modifier
-                .align(Alignment.End)
-                .padding(16.dp)
-        ) {
-            Text("Logout")
+    Scaffold(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(0.dp),
+        topBar = {
+            AppBar(
+                navController = navController,
+                isVisible = topBarVisibilityState.value,
+                searchQuery = searchQuery,
+                onSearchQueryChange = { newQuery -> searchQuery = newQuery },
+                onUserIconClick = {
+                    navController.navigate(AppRoutes.profileScreen)
+                },
+                onNotificationIconClick = {
+                    // Handle notification icon click
+                },
+                onOrderIconClick ={
+                    navController.navigate(AppRoutes.orderScreen)
+                }
+            )
+        },
+        floatingActionButton = {
+            androidx.compose.material.FloatingActionButton(
+                onClick = {
+                    navController.navigate(AppRoutes.cartScreen)
+                },
+                backgroundColor = MaterialTheme.colorScheme.surfaceContainer
+            ) {
+                androidx.compose.material.Icon(
+                    painter = painterResource(id = R.drawable.cart_icon),
+                    contentDescription = "Add to Cart"
+                )
+            }
         }
-
-        // Category Filter
-        LazyRow(
-            modifier = Modifier.padding(16.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) { paddingValues ->
+        // Main content area
+        Column(
+            modifier = Modifier
+                .padding(paddingValues)
+                .verticalScroll(rememberScrollState())
         ) {
-            items(categories) { category ->
-                Button(
-                    onClick = { selectedCategory = category },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = if (selectedCategory == category)
-                            MaterialTheme.colorScheme.onPrimaryContainer
-                        else
-                            Color.Gray
-                    )
-                ) {
-                    Text(category)
+            // Icon Row
+            Row(modifier = Modifier.fillMaxWidth()) {
+                val icons = listOf(
+                    Pair(R.drawable.flash_icon, "Deals"),
+                    Pair(R.drawable.bill_icon, "Bill"),
+                    Pair(R.drawable.game_icon, "Game"),
+                    Pair(R.drawable.gift_icon, "Gifts"),
+                    Pair(R.drawable.discover, "More")
+                )
+
+                icons.forEach { (iconRes, label) ->
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f),
+                        verticalArrangement = Arrangement.Center,
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Image(
+                            painter = painterResource(id = iconRes),
+                            contentDescription = label,
+                            modifier = Modifier
+                                .background(
+                                    MaterialTheme.colorScheme.surfaceContainer,
+                                    shape = RoundedCornerShape(10.dp)
+                                )
+                                .size(50.dp)
+                                .clip(RoundedCornerShape(10.dp))
+                                .clickable { /* Handle click */ }
+                                .padding(10.dp)
+                        )
+                        Text(text = label, fontSize = 14.sp, textAlign = TextAlign.Center)
+                    }
                 }
             }
-        }
 
-        // Search Bar
-        TextField(
-            value = searchQuery,
-            onValueChange = { searchQuery = it },
-            label = { Text("Search") },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
-        )
+            Spacer(modifier = Modifier.height(30.dp))
 
-        // Filtered Product List
-        val filteredProducts = products.filter {
-            (selectedCategory == "All" || it.category == selectedCategory) &&
-                    it.name.contains(searchQuery, ignoreCase = true)
-        }
-
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            items(filteredProducts) { product ->
-                ProductItem(product = product, onClick = { onProductClick(product) })
+            // Special Offers Title
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 10.dp),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(text = "Special for you", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                Text(text = "See More")
             }
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            // Special Offer Cart
+            LazyRow(
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                contentPadding = PaddingValues(horizontal = 10.dp)
+            ) {
+                items(listOf(R.drawable.image_banner_3, R.drawable.image_banner_2)) { imageRes ->
+                    ConstraintLayout(
+                        modifier = Modifier
+                            .width(280.dp)
+                            .clip(RoundedCornerShape(20.dp))
+                    ) {
+                        val (bannerText, bannerImage) = createRefs()
+                        Image(
+                            painter = painterResource(id = imageRes),
+                            contentDescription = "",
+                            modifier = Modifier.constrainAs(bannerImage) {}
+                        )
+                        Column(
+                            modifier = Modifier
+                                .background(Color(0x8DB3B0B0))
+                                .padding(15.dp)
+                                .constrainAs(bannerText) {
+                                    top.linkTo(bannerImage.top)
+                                    bottom.linkTo(bannerImage.bottom)
+                                    start.linkTo(bannerImage.start)
+                                    end.linkTo(bannerImage.end)
+                                    height = Dimension.fillToConstraints
+                                    width = Dimension.fillToConstraints
+                                }
+                        ) {
+                            when (imageRes) {
+                                R.drawable.image_banner_3 -> {
+                                    Text(
+                                        text = "Fashion",
+                                        color = Color.White,
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 18.sp
+                                    )
+                                    Spacer(modifier = Modifier.heightIn(15.dp))
+                                    Text(text = "85 Brands", color = Color.White)
+                                }
+                                R.drawable.image_banner_2 -> {
+                                    Text(
+                                        text = "Mobile Phone & Gadget",
+                                        color = Color.White,
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 18.sp
+                                    )
+                                    Spacer(modifier = Modifier.heightIn(15.dp))
+                                    Text(text = "15 Brands", color = Color.White)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 10.dp),
+                horizontalArrangement = Arrangement.Start
+            ) { Text(text = "Popular Products", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+
+            }
+            Spacer(modifier = Modifier.height(10.dp))
+
+            // Category Buttons
+            LazyRow(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 10.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                when (categoryState) {
+                    is Resource.Loading -> {
+                        item {
+                            Box(
+                                modifier = Modifier.fillMaxWidth(),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                CircularProgressIndicator(
+                                    color = MaterialTheme.colorScheme.surfaceContainer,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            }
+                        }
+
+                    }
+                    is Resource.Error -> {
+                        (categoryState as Resource.Error).message?.let {
+                            item {
+                                Text(
+                                    text = it.replaceFirstChar {
+                                        if (it.isLowerCase()) it.titlecase(
+                                            Locale.getDefault()
+                                        ) else it.toString()
+                                    },
+                                    color = Color.Red,
+                                    modifier = Modifier.align(Alignment.CenterHorizontally)
+                                )
+                            }
+                        }
+                    }
+                    is Resource.Success -> {
+                        val categories = (categoryState as Resource.Success<List<String>>).data ?: emptyList()
+                        val allCategories = listOf("All") + categories
+
+                        items(allCategories) { category ->
+                            Button(
+                                onClick = { selectedCategory = category },
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = MaterialTheme.colorScheme.surfaceContainer
+                                ),
+                                shape = RoundedCornerShape(25.dp)
+                            ) {
+                                Text(
+                                    text = category.replaceFirstChar {
+                                        if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString()
+                                    },
+                                    color = if (selectedCategory == category) Color.Black else Color(0xFF626262),
+                                    fontWeight = if (selectedCategory == category) FontWeight.Bold else FontWeight.Normal
+                                )
+                            }
+                        }
+
+                    }
+
+
+                    null -> {
+                        item {
+                            Text("No categories available", color = Color.Gray)
+                        }
+                    }
+                }
+            }
+            Spacer(modifier = Modifier.height(10.dp))
+            when (productState) {
+                is Resource.Loading -> {
+                    Box(
+                        modifier = Modifier.fillMaxWidth(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(
+                            color = MaterialTheme.colorScheme.surfaceContainer,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+                }
+                is Resource.Error -> {
+                    (productState as Resource.Error).message?.let {
+                        Text(
+                            text = it,
+                            color = Color.Red,
+                            modifier = Modifier.align(Alignment.CenterHorizontally)
+                        )
+                    }
+                }
+                is Resource.Success -> {
+                    val filteredProducts = (productState as Resource.Success<List<Product>>).data?.filter {
+                        (selectedCategory == "All" || it.category == selectedCategory) &&
+                                it.title.contains(searchQuery, ignoreCase = true)
+                    }
+
+                    if (filteredProducts.isNullOrEmpty()) {
+                        Text(
+                            text = "No products available",
+                            modifier = Modifier.align(Alignment.CenterHorizontally),
+                            color =  MaterialTheme.colorScheme.surfaceContainer
+                        )
+                    } else {
+                        LazyRow(
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                            contentPadding = PaddingValues(horizontal = 10.dp)
+                        ) {
+                            items(filteredProducts) { product ->
+                                // Favorite state rememberable
+                                var favouriteRemember by remember { mutableStateOf(true) }
+
+                                Column(
+                                    modifier = Modifier
+                                        .width(150.dp)
+                                        .padding(4.dp)
+
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(100.dp)
+                                            .background(
+                                                MaterialTheme.colorScheme.surfaceContainer,
+                                                shape = RoundedCornerShape(10.dp)
+                                            )
+                                            .clip(RoundedCornerShape(10.dp))
+                                            .clickable {
+                                                onProductClick(product)
+                                            },
+                                        contentAlignment = Alignment.Center
+
+                                    ) {
+                                        Image(
+                                            painter = rememberAsyncImagePainter(model = product.image),
+                                            contentDescription = product.title,
+                                            modifier = Modifier.fillMaxSize(),
+                                            contentScale = ContentScale.Crop
+
+                                        )
+                                    }
+                                    Text(
+                                        text = product.title,
+                                        maxLines = 2,
+                                        overflow = TextOverflow.Ellipsis,
+                                        modifier = Modifier.width(150.dp).padding(vertical = 8.dp)
+                                    )
+
+                                    Row(
+                                        modifier = Modifier
+                                            .width(150.dp)
+                                            .fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        Text(
+                                            text = "LKR ${product.price}",
+                                            fontWeight = FontWeight(800),
+                                            color = Color.Black
+
+                                        )
+                                        Box(
+                                            modifier = Modifier
+                                                .size(20.dp)
+                                                .background(
+                                                    MaterialTheme.colorScheme.surfaceContainer,
+                                                    shape = CircleShape
+                                                )
+                                                .clip(CircleShape)
+                                                .clickable {
+                                                    favouriteRemember = !favouriteRemember
+                                                },
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Image(
+                                                painter = painterResource(
+                                                    id = if (favouriteRemember)
+                                                        R.drawable.heart_icon_2
+                                                    else R.drawable.heart_icon
+                                                ),
+                                                contentDescription = "Favourite Icon",
+                                                modifier = Modifier.padding(3.dp),
+                                                colorFilter = if (favouriteRemember) ColorFilter.tint(Color.Red) else null
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                    }
+                }
+                null -> {
+                    Text(
+                        text = "No products available",
+                        modifier = Modifier.align(Alignment.CenterHorizontally),
+                        color = Color.Gray
+                    )
+                }
+            }
+
         }
     }
 }
-
-@Composable
-fun ProductItem(product: Product, onClick: () -> Unit) {
-    Column(
-        Modifier
-            .fillMaxWidth()
-            .clickable { onClick() }
-            .padding(16.dp)
-    ) {
-        Text(text = product.name, style = MaterialTheme.typography.titleMedium)
-        Text(text = "$${product.price}", style = MaterialTheme.typography.bodyLarge)
-    }
-}
-
