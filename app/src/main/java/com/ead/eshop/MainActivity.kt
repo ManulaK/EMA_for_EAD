@@ -6,7 +6,7 @@ import androidx.activity.compose.setContent
 import androidx.lifecycle.ViewModelProvider
 import com.ead.eshop.data.repository.ProductRepository
 import com.ead.eshop.viewmodels.ProductViewModel
-import com.ead.eshop.viewmodels.ProductViewModelFactory
+import com.ead.eshop.viewmodels.factorys.ProductViewModelFactory
 
 
 class MainActivity : ComponentActivity() {

@@ -290,6 +290,135 @@ fun HomeScreen(
                 }
             }
             Spacer(modifier = Modifier.height(10.dp))
+
+            when (productState) {
+                is Resource.Loading -> {
+                    Box(
+                        modifier = Modifier.fillMaxWidth(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(
+                            color = MaterialTheme.colorScheme.surfaceContainer,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+                }
+                is Resource.Error -> {
+                    (productState as Resource.Error).message?.let {
+                        Text(
+                            text = it,
+                            color = Color.Red,
+                            modifier = Modifier.align(Alignment.CenterHorizontally)
+                        )
+                    }
+                }
+                is Resource.Success -> {
+                    val filteredProducts = (productState as Resource.Success<List<Product>>).data?.filter {
+                        (selectedCategory == "All" || it.category == selectedCategory) &&
+                                it.title.contains(searchQuery, ignoreCase = true)
+                    }
+
+                    if (filteredProducts.isNullOrEmpty()) {
+                        Text(
+                            text = "No products available",
+                            modifier = Modifier.align(Alignment.CenterHorizontally),
+                            color =  MaterialTheme.colorScheme.surfaceContainer
+                        )
+                    } else {
+                        LazyRow(
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                            contentPadding = PaddingValues(horizontal = 10.dp)
+                        ) {
+                            items(filteredProducts) { product ->
+                                // Favorite state rememberable
+                                var favouriteRemember by remember { mutableStateOf(true) }
+
+                                Column(
+                                    modifier = Modifier
+                                        .width(150.dp)
+                                        .padding(4.dp)
+
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(100.dp)
+                                            .background(
+                                                MaterialTheme.colorScheme.surfaceContainer,
+                                                shape = RoundedCornerShape(10.dp)
+                                            )
+                                            .clip(RoundedCornerShape(10.dp))
+                                            .clickable {
+                                                onProductClick(product)
+                                            },
+                                        contentAlignment = Alignment.Center
+
+                                    ) {
+                                        Image(
+                                            painter = rememberAsyncImagePainter(model = product.image),
+                                            contentDescription = product.title,
+                                            modifier = Modifier.fillMaxSize(),
+                                            contentScale = ContentScale.Crop
+
+                                        )
+                                    }
+                                    Text(
+                                        text = product.title,
+                                        maxLines = 2,
+                                        overflow = TextOverflow.Ellipsis,
+                                        modifier = Modifier.width(150.dp).padding(vertical = 8.dp)
+                                    )
+
+                                    Row(
+                                        modifier = Modifier
+                                            .width(150.dp)
+                                            .fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        Text(
+                                            text = "LKR ${product.price}",
+                                            fontWeight = FontWeight(800),
+                                            color = Color.Black
+
+                                        )
+                                        Box(
+                                            modifier = Modifier
+                                                .size(20.dp)
+                                                .background(
+                                                    MaterialTheme.colorScheme.surfaceContainer,
+                                                    shape = CircleShape
+                                                )
+                                                .clip(CircleShape)
+                                                .clickable {
+                                                    favouriteRemember = !favouriteRemember
+                                                },
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Image(
+                                                painter = painterResource(
+                                                    id = if (favouriteRemember)
+                                                        R.drawable.heart_icon_2
+                                                    else R.drawable.heart_icon
+                                                ),
+                                                contentDescription = "Favourite Icon",
+                                                modifier = Modifier.padding(3.dp),
+                                                colorFilter = if (favouriteRemember) ColorFilter.tint(Color.Red) else null
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                    }
+                }
+                null -> {
+                    Text(
+                        text = "No products available",
+                        modifier = Modifier.align(Alignment.CenterHorizontally),
+                        color = Color.Gray
+                    )
+                }
+            }
             when (productState) {
                 is Resource.Loading -> {
                     Box(

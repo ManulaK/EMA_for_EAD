@@ -9,13 +9,7 @@ data class Order(
     val statusUpdates: List<OrderStatusUpdate>
 )
 
-data class OrderStatusUpdate(
-    val status: String,
-    val date: String,
-    val isCompleted: Boolean
-) {
 
-}
 
 // Sample orders
 val sampleOrders = listOf(

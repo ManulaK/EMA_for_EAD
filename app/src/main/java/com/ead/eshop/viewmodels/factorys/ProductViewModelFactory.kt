@@ -1,8 +1,9 @@
-package com.ead.eshop.viewmodels
+package com.ead.eshop.viewmodels.factorys
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.ead.eshop.data.repository.ProductRepository
+import com.ead.eshop.viewmodels.ProductViewModel
 
 class ProductViewModelFactory(
     private val productRepository: ProductRepository

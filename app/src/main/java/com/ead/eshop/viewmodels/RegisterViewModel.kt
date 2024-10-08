@@ -18,12 +18,37 @@ class RegisterViewModel : ViewModel() {
     private val _registerResponse = MutableLiveData<Resource<RegisterResponse>>()
     val registerResponse: LiveData<Resource<RegisterResponse>> get() = _registerResponse
 
-    fun registerUser(email: String, password: String) {
+    fun registerUser(
+        username: String,
+        passwordHash: String,
+        email: String,
+        firstName: String,
+        lastName: String,
+        dateOfBirth: String,
+        street: String,
+        city: String,
+        state: String,
+        postalCode: String,
+        country: String
+    ) {
         _registerResponse.value = Resource.Loading()
 
         viewModelScope.launch {
             try {
-                val response = authRepository.registerUser(email ,password)
+                val response = authRepository.registerUser(
+                    username,
+                    passwordHash,
+                    email,
+                    firstName,
+                    lastName,
+                    dateOfBirth,
+                    street,
+                    city,
+                    state,
+                    postalCode,
+                    country
+                )
+
                 if (response.isSuccessful) {
                     response.body()?.let {
                         _registerResponse.value = Resource.Success(it)
@@ -31,7 +56,7 @@ class RegisterViewModel : ViewModel() {
                         _registerResponse.value = Resource.Error("Unknown error occurred.")
                     }
                 } else {
-                    _registerResponse.value = Resource.Error("User Creation Failed")
+                    _registerResponse.value = Resource.Error("User creation failed.")
                 }
             } catch (e: HttpException) {
                 _registerResponse.value = Resource.Error("Server error: ${e.message()}")
@@ -42,5 +67,4 @@ class RegisterViewModel : ViewModel() {
             }
         }
     }
-
 }

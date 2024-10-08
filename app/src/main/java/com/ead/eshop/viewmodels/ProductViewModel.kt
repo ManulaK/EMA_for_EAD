@@ -9,8 +9,6 @@ import com.ead.eshop.data.repository.ProductRepository
 import com.ead.eshop.utils.Resource
 
 import kotlinx.coroutines.launch
-import retrofit2.HttpException
-import java.io.IOException
 
 class ProductViewModel(private val productRepository: ProductRepository) : ViewModel() {
 

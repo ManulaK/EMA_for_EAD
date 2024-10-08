@@ -60,7 +60,6 @@ dependencies {
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
     implementation(libs.androidx.runtime.livedata)
-    implementation(libs.play.services.analytics.impl)
     implementation(libs.androidx.constraintlayout)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
@@ -79,5 +78,5 @@ dependencies {
     implementation (libs.constraintlayout.compose)
     implementation (libs.androidx.material)
     implementation(libs.jetlime)
-
+    implementation (libs.logging.interceptor) // or latest version
 }

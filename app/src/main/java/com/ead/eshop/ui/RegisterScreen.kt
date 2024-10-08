@@ -38,6 +38,14 @@ fun <T> RegisterScreen(navController: NavController, registerViewModel: Register
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var repeatPassword by remember { mutableStateOf("") }
+    var firstName by remember { mutableStateOf("") }
+    var lastName by remember { mutableStateOf("") }
+    var dateOfBirth by remember { mutableStateOf("") }
+    var street by remember { mutableStateOf("") }
+    var city by remember { mutableStateOf("") }
+    var state by remember { mutableStateOf("") }
+    var postalCode by remember { mutableStateOf("") }
+    var country by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
     var repeatPasswordVisible by remember { mutableStateOf(false) }
 
@@ -73,6 +81,94 @@ fun <T> RegisterScreen(navController: NavController, registerViewModel: Register
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
             modifier = Modifier.padding(bottom = 24.dp)
+        )
+
+        OutlinedTextField(
+            value = firstName,
+            onValueChange = { firstName = it },
+            label = { Text("First Name") },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 16.dp),
+            shape = RoundedCornerShape(12.dp)
+        )
+
+        OutlinedTextField(
+            value = lastName,
+            onValueChange = { lastName = it },
+            label = { Text("Last Name") },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 16.dp),
+            shape = RoundedCornerShape(12.dp)
+        )
+
+        OutlinedTextField(
+            value = dateOfBirth,
+            onValueChange = { dateOfBirth = it },
+            label = { Text("Date of Birth (YYYY-MM-DD)") },
+            keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Text,
+                imeAction = ImeAction.Next
+            ),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 16.dp),
+            shape = RoundedCornerShape(12.dp)
+        )
+
+        OutlinedTextField(
+            value = street,
+            onValueChange = { street = it },
+            label = { Text("Street Address") },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 16.dp),
+            shape = RoundedCornerShape(12.dp)
+        )
+
+        OutlinedTextField(
+            value = city,
+            onValueChange = { city = it },
+            label = { Text("City") },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 16.dp),
+            shape = RoundedCornerShape(12.dp)
+        )
+
+        OutlinedTextField(
+            value = state,
+            onValueChange = { state = it },
+            label = { Text("State") },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 16.dp),
+            shape = RoundedCornerShape(12.dp)
+        )
+
+        OutlinedTextField(
+            value = postalCode,
+            onValueChange = { postalCode = it },
+            label = { Text("Postal Code") },
+            keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Number,
+                imeAction = ImeAction.Next
+            ),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 16.dp),
+            shape = RoundedCornerShape(12.dp)
+        )
+
+        OutlinedTextField(
+            value = country,
+            onValueChange = { country = it },
+            label = { Text("Country") },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 16.dp),
+            shape = RoundedCornerShape(12.dp)
         )
 
         OutlinedTextField(
@@ -139,7 +235,19 @@ fun <T> RegisterScreen(navController: NavController, registerViewModel: Register
         Button(
             onClick = {
                 if (password == repeatPassword) {
-                    registerViewModel.registerUser(email, password)
+                    registerViewModel.registerUser(
+                        username = "$firstName $lastName",
+                        passwordHash = password,
+                        email = email,
+                        firstName = firstName,
+                        lastName = lastName,
+                        dateOfBirth = dateOfBirth,
+                        street = street,
+                        city = city,
+                        state = state,
+                        postalCode = postalCode,
+                        country = country
+                    )
                 } else {
                     Toast.makeText(context, "Passwords do not match", Toast.LENGTH_SHORT).show()
                 }
@@ -177,7 +285,6 @@ fun <T> RegisterScreen(navController: NavController, registerViewModel: Register
             }
             is Resource.Success -> {
                 LaunchedEffect(Unit) {
-
                     Toast.makeText(context, "Registration Successful", Toast.LENGTH_SHORT).show()
                     navController.navigate(AppRoutes.loginScreen)
                 }

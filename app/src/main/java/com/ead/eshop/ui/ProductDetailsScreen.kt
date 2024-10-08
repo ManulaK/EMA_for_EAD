@@ -138,7 +138,7 @@ fun ProductDetailsScreen(
             AsyncImage(
                 model = product.image,
                 contentDescription = null,
-                modifier = Modifier.size(220.dp)
+                modifier = Modifier.size(360.dp)
             )
             Spacer(modifier = Modifier.height(20.dp))
             LazyRow(

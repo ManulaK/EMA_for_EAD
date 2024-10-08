@@ -36,7 +36,7 @@ class LoginViewModel : ViewModel() {
             } catch (e: HttpException) {
                 _loginResponse.value = Resource.Error("Server error: ${e.message()}")
             } catch (e: IOException) {
-                _loginResponse.value = Resource.Error("Network error: Please check your internet connection.")
+                _loginResponse.value = Resource.Error("Network error: Please check your internet connection. ${e.message}")
             } catch (e: Exception) {
                 _loginResponse.value = Resource.Error("Unexpected error: ${e.localizedMessage}")
             }
