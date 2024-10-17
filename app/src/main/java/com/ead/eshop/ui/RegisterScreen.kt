@@ -35,6 +35,7 @@ import com.ead.eshop.viewmodels.RegisterViewModel
 
 @Composable
 fun <T> RegisterScreen(navController: NavController, registerViewModel: RegisterViewModel = viewModel()) {
+    // Existing state variables...
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var repeatPassword by remember { mutableStateOf("") }
@@ -49,6 +50,13 @@ fun <T> RegisterScreen(navController: NavController, registerViewModel: Register
     var passwordVisible by remember { mutableStateOf(false) }
     var repeatPasswordVisible by remember { mutableStateOf(false) }
 
+    // Error state variables
+    var firstNameError by remember { mutableStateOf<String?>(null) }
+    var lastNameError by remember { mutableStateOf<String?>(null) }
+    var emailError by remember { mutableStateOf<String?>(null) }
+    var passwordError by remember { mutableStateOf<String?>(null) }
+    var dateOfBirthError by remember { mutableStateOf<String?>(null) }
+
     // Observe the registerResponse state from the ViewModel
     val registerState by registerViewModel.registerResponse.observeAsState()
 
@@ -62,14 +70,14 @@ fun <T> RegisterScreen(navController: NavController, registerViewModel: Register
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(24.dp),
+            .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
         Text(
-            text = "Create Account",
+            text = "Register",
             style = MaterialTheme.typography.headlineLarge.copy(
-                fontSize = (screenWidth.value * 0.07f).sp,
+                fontSize = (screenWidth.value * 0.06f).sp,
                 fontWeight = FontWeight.Bold
             ),
             textAlign = TextAlign.Center,
@@ -77,119 +85,196 @@ fun <T> RegisterScreen(navController: NavController, registerViewModel: Register
         )
 
         Text(
-            text = "Please enter your details",
+            text = "Admin will shortly activate your account",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-            modifier = Modifier.padding(bottom = 24.dp)
+            modifier = Modifier.padding(bottom = 16.dp)
         )
-
-        OutlinedTextField(
-            value = firstName,
-            onValueChange = { firstName = it },
-            label = { Text("First Name") },
+        Row(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 16.dp),
-            shape = RoundedCornerShape(12.dp)
-        )
-
-        OutlinedTextField(
-            value = lastName,
-            onValueChange = { lastName = it },
-            label = { Text("Last Name") },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 16.dp),
-            shape = RoundedCornerShape(12.dp)
-        )
+                .fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                OutlinedTextField(
+                    value = firstName,
+                    onValueChange = {
+                        firstName = it
+                        if (it.isNotBlank()) {
+                            firstNameError = null
+                        }
+                    },
+                    label = { Text("First Name") },
+                    isError = firstNameError != null,
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp)
+                )
+                if (firstNameError != null) {
+                    Text(
+                        text = firstNameError!!,
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                }
+            }
+            Column(modifier = Modifier.weight(1f)) {
+                OutlinedTextField(
+                    value = lastName,
+                    onValueChange = {
+                        lastName = it
+                        if (it.isNotBlank()) {
+                            lastNameError = null
+                        }
+                    },
+                    label = { Text("Last Name") },
+                    isError = lastNameError != null,
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp)
+                )
+                if (lastNameError != null) {
+                    Text(
+                        text = lastNameError!!,
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                }
+            }
+        }
 
         OutlinedTextField(
             value = dateOfBirth,
-            onValueChange = { dateOfBirth = it },
+            onValueChange = {
+                dateOfBirth = it
+                if (isValidDateOfBirth(it)) {
+                    dateOfBirthError = null
+                }
+            },
             label = { Text("Date of Birth (YYYY-MM-DD)") },
+            isError = dateOfBirthError != null,
             keyboardOptions = KeyboardOptions(
-                keyboardType = KeyboardType.Text,
+                keyboardType = KeyboardType.Number,
                 imeAction = ImeAction.Next
             ),
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 16.dp),
+                .fillMaxWidth(),
             shape = RoundedCornerShape(12.dp)
         )
+        if (dateOfBirthError != null) {
+            Text(
+                text = dateOfBirthError!!,
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodySmall ,
+                textAlign = TextAlign.Start,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
 
         OutlinedTextField(
             value = street,
             onValueChange = { street = it },
             label = { Text("Street Address") },
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 16.dp),
+                .fillMaxWidth(),
             shape = RoundedCornerShape(12.dp)
         )
 
-        OutlinedTextField(
-            value = city,
-            onValueChange = { city = it },
-            label = { Text("City") },
+        // City and State in the same row
+        Row(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 16.dp),
-            shape = RoundedCornerShape(12.dp)
-        )
+                .fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            OutlinedTextField(
+                value = city,
+                onValueChange = { city = it },
+                label = { Text("City") },
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp)
+            )
 
-        OutlinedTextField(
-            value = state,
-            onValueChange = { state = it },
-            label = { Text("State") },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 16.dp),
-            shape = RoundedCornerShape(12.dp)
-        )
+            OutlinedTextField(
+                value = state,
+                onValueChange = { state = it },
+                label = { Text("State") },
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp)
+            )
+        }
 
-        OutlinedTextField(
-            value = postalCode,
-            onValueChange = { postalCode = it },
-            label = { Text("Postal Code") },
-            keyboardOptions = KeyboardOptions(
-                keyboardType = KeyboardType.Number,
-                imeAction = ImeAction.Next
-            ),
+        // Postal Code and Country in the same row
+        Row(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 16.dp),
-            shape = RoundedCornerShape(12.dp)
-        )
-
-        OutlinedTextField(
-            value = country,
-            onValueChange = { country = it },
-            label = { Text("Country") },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 16.dp),
-            shape = RoundedCornerShape(12.dp)
-        )
+                .fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            OutlinedTextField(
+                value = postalCode,
+                onValueChange = { postalCode = it },
+                label = { Text("Postal Code") },
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Number,
+                    imeAction = ImeAction.Next
+                ),
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp)
+            )
+            OutlinedTextField(
+                value = country,
+                onValueChange = { country = it },
+                label = { Text("Country") },
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp)
+            )
+        }
 
         OutlinedTextField(
             value = email,
-            onValueChange = { email = it },
-            label = { Text("Your email") },
+            onValueChange = {
+                email = it
+                if (it.isNotBlank()) {
+                    emailError = null
+                }
+            },
+            label = { Text("Your Email") },
+            isError = emailError != null,
             keyboardOptions = KeyboardOptions(
                 keyboardType = KeyboardType.Email,
                 imeAction = ImeAction.Next
             ),
             leadingIcon = { Icon(imageVector = Icons.Filled.Email, contentDescription = "Email Icon") },
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 16.dp),
+                .fillMaxWidth(),
             shape = RoundedCornerShape(12.dp)
         )
+        if (emailError != null) {
+            Text(
+                text = emailError!!,
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodySmall,
+                textAlign = TextAlign.Start,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+
 
         OutlinedTextField(
             value = password,
-            onValueChange = { password = it },
+            onValueChange = {
+                password = it
+                if (it.isNotBlank()) {
+                    passwordError = null
+                }
+            },
             label = { Text("Password") },
+            isError = passwordError != null,
             keyboardOptions = KeyboardOptions(
                 keyboardType = KeyboardType.Password,
                 imeAction = ImeAction.Next
@@ -204,15 +289,23 @@ fun <T> RegisterScreen(navController: NavController, registerViewModel: Register
                 }
             },
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 16.dp),
+                .fillMaxWidth(),
             shape = RoundedCornerShape(12.dp)
         )
+        if (passwordError != null) {
+            Text(
+                text = passwordError!!,
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodySmall,
+                textAlign = TextAlign.Start,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
 
         OutlinedTextField(
             value = repeatPassword,
             onValueChange = { repeatPassword = it },
-            label = { Text("Repeat password") },
+            label = { Text("Repeat Password") },
             keyboardOptions = KeyboardOptions(
                 keyboardType = KeyboardType.Password,
                 imeAction = ImeAction.Done
@@ -234,7 +327,39 @@ fun <T> RegisterScreen(navController: NavController, registerViewModel: Register
 
         Button(
             onClick = {
-                if (password == repeatPassword) {
+                var hasError = false
+
+                if (firstName.isBlank()) {
+                    firstNameError = "First name is required"
+                    hasError = true
+                }
+
+                if (lastName.isBlank()) {
+                    lastNameError = "Last name is required"
+                    hasError = true
+                }
+
+                if (email.isBlank()) {
+                    emailError = "Email is required"
+                    hasError = true
+                }
+
+                if (password.isBlank()) {
+                    passwordError = "Password is required"
+                    hasError = true
+                }
+
+                if (!isValidDateOfBirth(dateOfBirth)) {
+                    dateOfBirthError = "Date must be in YYYY-MM-DD format"
+                    hasError = true
+                }
+
+                if (password != repeatPassword) {
+                    Toast.makeText(context, "Passwords do not match", Toast.LENGTH_SHORT).show()
+                    hasError = true
+                }
+
+                if (!hasError) {
                     registerViewModel.registerUser(
                         username = "$firstName $lastName",
                         passwordHash = password,
@@ -248,8 +373,6 @@ fun <T> RegisterScreen(navController: NavController, registerViewModel: Register
                         postalCode = postalCode,
                         country = country
                     )
-                } else {
-                    Toast.makeText(context, "Passwords do not match", Toast.LENGTH_SHORT).show()
                 }
             },
             modifier = Modifier
@@ -264,7 +387,7 @@ fun <T> RegisterScreen(navController: NavController, registerViewModel: Register
             Text(text = "Register", style = MaterialTheme.typography.labelLarge)
         }
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(12.dp))
 
         TextButton(onClick = { navController.navigate(AppRoutes.loginScreen) }) {
             Text(
@@ -299,4 +422,10 @@ fun <T> RegisterScreen(navController: NavController, registerViewModel: Register
             else -> {}
         }
     }
+}
+
+// Helper function to validate date format
+fun isValidDateOfBirth(date: String): Boolean {
+    val regex = Regex("\\d{4}-\\d{2}-\\d{2}")
+    return regex.matches(date)
 }
