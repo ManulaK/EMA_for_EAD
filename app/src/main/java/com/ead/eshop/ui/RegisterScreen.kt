@@ -330,12 +330,12 @@ fun <T> RegisterScreen(navController: NavController, registerViewModel: Register
                 var hasError = false
 
                 if (firstName.isBlank()) {
-                    firstNameError = "First name is required"
+                    firstNameError = "First Name is required"
                     hasError = true
                 }
 
                 if (lastName.isBlank()) {
-                    lastNameError = "Last name is required"
+                    lastNameError = "Last Name is required"
                     hasError = true
                 }
 
@@ -386,8 +386,6 @@ fun <T> RegisterScreen(navController: NavController, registerViewModel: Register
         ) {
             Text(text = "Register", style = MaterialTheme.typography.labelLarge)
         }
-
-        Spacer(modifier = Modifier.height(12.dp))
 
         TextButton(onClick = { navController.navigate(AppRoutes.loginScreen) }) {
             Text(

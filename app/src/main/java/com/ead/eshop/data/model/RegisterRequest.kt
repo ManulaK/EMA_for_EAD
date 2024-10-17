@@ -8,6 +8,6 @@ data class RegisterRequest(
     val firstName: String,
     val lastName: String,
     val dateOfBirth: String,
-    val address: Address
+    val address: Address? = null
 )
 
