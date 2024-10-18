@@ -42,11 +42,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import base64ToImageBitmap
 import coil.compose.AsyncImage
 import coil.compose.rememberAsyncImagePainter
 import coil.compose.rememberImagePainter
@@ -54,32 +58,26 @@ import com.ead.eshop.AppRoutes
 import com.ead.eshop.R
 import com.ead.eshop.data.model.Product
 
-@SuppressLint("UnusedMaterialScaffoldPaddingParameter", "UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun ProductDetailsScreen(
     navController: NavController,
     product: Product,
-    onAddToCart: (Product, Int) -> Unit
 ) {
+    val context = LocalContext.current
+
     var quantity by remember { mutableIntStateOf(1) }
 
-    // Define a base price and total price
     val basePrice = product.price
     val totalPrice = basePrice * quantity
-
     val colorList = listOf(Color.Red, Color.Black, Color.Blue, Color.LightGray,)
-
     var colorSelected by remember { mutableStateOf(colorList[0]) }
-
     val imageList = List(4) { product.image }
-
     var selectedPicture by remember { mutableStateOf(imageList[0]) }
 
     Scaffold() {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(color = Color.White)
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally,
             ) {
@@ -116,14 +114,11 @@ fun ProductDetailsScreen(
                         )
                         .padding(3.dp)
                         .clip(RoundedCornerShape(8.dp)),
-                    horizontalArrangement = Arrangement.spacedBy(
-                        4.dp,
-                        Alignment.CenterHorizontally
-                    ),
-                    verticalAlignment = Alignment.CenterVertically
+                            horizontalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterHorizontally),
+                            verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = product.rating.rate.toString(),
+                        text = "4.5",
                         fontWeight = FontWeight.Bold,
                         color = Color.Black
                     )
@@ -132,13 +127,12 @@ fun ProductDetailsScreen(
                         contentDescription = null
                     )
                 }
-
-
             }
-            AsyncImage(
-                model = product.image,
+            Image(
+                bitmap = base64ToImageBitmap(product.image) ?: ImageBitmap(1, 1),
                 contentDescription = null,
-                modifier = Modifier.size(360.dp)
+                modifier = Modifier.size(360.dp).padding(top = 8.dp),
+                contentScale = ContentScale.Crop
             )
             Spacer(modifier = Modifier.height(20.dp))
             LazyRow(
@@ -156,13 +150,11 @@ fun ProductDetailsScreen(
                                 color = if (selectedPicture == imageList[it]) MaterialTheme.colorScheme.surfaceContainer else Color.Transparent,
                                 shape = RoundedCornerShape(10.dp)
                             )
-                            .background(Color.White, shape = RoundedCornerShape(10.dp))
                             .padding(5.dp)
                             .clip(RoundedCornerShape(10.dp))
                     ) {
-                        // Assuming you're loading the image from a string resource (e.g., a URL or file path)
                         Image(
-                            painter = rememberAsyncImagePainter(model = imageList[it]), // Using a painter to load image from a URL or path
+                            bitmap = base64ToImageBitmap(imageList[it]) ?: ImageBitmap(1, 1),
                             contentDescription = null,
                         )
                     }
@@ -174,10 +166,7 @@ fun ProductDetailsScreen(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(
-                        Color.White,
-                        shape = RoundedCornerShape(topStart = 15.dp, topEnd = 15.dp)
-                    )
+
             ) {
 
                 Row(
@@ -191,7 +180,7 @@ fun ProductDetailsScreen(
                             .padding(10.dp)
                     ) {
                         Text(
-                            text = product.title,
+                            text = product.name,
                             fontWeight = FontWeight.Bold,
                             fontSize = 18.sp
                         )
@@ -232,10 +221,6 @@ fun ProductDetailsScreen(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(
-                            Color.White,
-
-                            )
                         .padding(8.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.Bottom
@@ -295,11 +280,11 @@ fun ProductDetailsScreen(
                                 if (quantity < 5) {
                                     quantity++
                                 } else {
-//                                Toast.makeText(
-//                                    context,
-//                                    "You can add maximum 5 item at a time.",
-//                                    Toast.LENGTH_SHORT
-//                                ).show()
+                                Toast.makeText(
+                                    context,
+                                    "You can add maximum 5 item at a time.",
+                                    Toast.LENGTH_SHORT
+                                ).show()
                                 }
                             },
                             modifier = Modifier
@@ -335,7 +320,6 @@ fun ProductDetailsScreen(
                             .padding(end = 8.dp),
                         shape = RoundedCornerShape(10.dp),
                         onClick = {
-                            onAddToCart(product, quantity)
                             navController.navigate(AppRoutes.cartScreen)
                         }
                     ) {

@@ -4,6 +4,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.ead.eshop.data.model.Category
 import com.ead.eshop.data.model.Product
 import com.ead.eshop.data.repository.ProductRepository
 import com.ead.eshop.utils.Resource
@@ -15,15 +16,16 @@ class ProductViewModel(private val productRepository: ProductRepository) : ViewM
     private val _products = MutableLiveData<Resource<List<Product>>>()
     val products: LiveData<Resource<List<Product>>> get() = _products
 
-    private val _categories = MutableLiveData<Resource<List<String>>>()
-    val categories: LiveData<Resource<List<String>>> get() = _categories
+    private val _categories = MutableLiveData<Resource<List<Category>>>()
+    val categories: LiveData<Resource<List<Category>>> get() = _categories
 
-    fun fetchProducts() {
+    fun fetchProducts(token: String) {
         _products.value = Resource.Loading()
+        val bearerToken = "Bearer $token"
 
         viewModelScope.launch {
             try {
-                val response = productRepository.getAllProducts()
+                val response = productRepository.getAllProducts(bearerToken)
                 if (response.isSuccessful) {
                     response.body()?.let {
                         _products.value = Resource.Success(it)
@@ -39,12 +41,13 @@ class ProductViewModel(private val productRepository: ProductRepository) : ViewM
         }
     }
 
-    fun fetchCategories() {
+    fun fetchCategories(token :String) {
+        val bearerToken = "Bearer $token"
         _categories.value = Resource.Loading()
 
         viewModelScope.launch {
             try {
-                val response = productRepository.getCategories()
+                val response = productRepository.getCategories(bearerToken)
                 if (response.isSuccessful) {
                     response.body()?.let {
                         _categories.value = Resource.Success(it)

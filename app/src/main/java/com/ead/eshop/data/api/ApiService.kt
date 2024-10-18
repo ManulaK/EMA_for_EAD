@@ -1,6 +1,7 @@
 package com.ead.eshop.data.api
 
 import com.ead.eshop.data.model.AuthRequest
+import com.ead.eshop.data.model.Category
 import com.ead.eshop.data.model.LoginResponse
 import com.ead.eshop.data.model.Product
 import com.ead.eshop.data.model.RegisterRequest
@@ -44,9 +45,13 @@ interface ApiService {
         @Header("Authorization") token: String
     ): Response<UserDeactivateResponse>
 
-    @GET("products")
-    suspend fun getAllProducts(): Response<List<Product>>
+    @GET("product/all")
+    suspend fun getAllProducts(
+        @Header("Authorization") token: String
+    ): Response<List<Product>>
 
-    @GET("products/categories")
-    suspend fun getCategories(): Response<List<String>>
+    @GET("categories")
+    suspend fun getCategories(
+        @Header("Authorization") token: String
+    ): Response<List<Category>>
 }

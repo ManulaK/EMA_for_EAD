@@ -52,8 +52,6 @@ fun AppNavigation(productViewModel: ProductViewModel) {
             }
         }
     }
-
-    // Show a loading screen until token is retrieved
     if (isLoading) {
         Box(
             modifier = Modifier
@@ -67,7 +65,6 @@ fun AppNavigation(productViewModel: ProductViewModel) {
         }
         return
     }
-
     NavHost(
         navController = navController,
         startDestination = if (token.isNullOrEmpty()) AppRoutes.welcomeScreen else AppRoutes.homeScreen
@@ -85,25 +82,24 @@ fun AppNavigation(productViewModel: ProductViewModel) {
             HomeScreen(
                 navController = navController,
                 productViewModel = productViewModel,
-                onProductClick = { product ->
-                    navController.navigate("product_details/${product.id}")
-                }
             )
         }
-        composable(route = AppRoutes.productDetailsScreen) { backStackEntry ->
-            val productId = backStackEntry.arguments?.getString("productId")?.toIntOrNull()
-            val product = productViewModel.products.value?.data?.find { it.id == productId }
-            if (product != null) {
-                ProductDetailsScreen(
-                    product = product,
-                    navController = navController
-                ) { product, quantity ->
-                    cartItems.add(product to quantity)
+        composable(route = AppRoutes.productDetailsScreen + "/{productId}") { backStackEntry ->
+            val productId = backStackEntry.arguments?.getString("productId")
+            if (productId != null) {
+                val product = productViewModel.products.value?.data?.find { it.id == productId}
+                if (product != null) {
+                    ProductDetailsScreen(
+                        navController = navController,
+                        product = product,
+                    )
+                } else {
+                    Log.e("Nav Host", "Product not found")
                 }
+            } else {
+                Log.e("Nav Host", "Invalid or null productId")
             }
         }
-
-        // Pass cart items to CartScreen
         composable(route = AppRoutes.cartScreen) {
             CartScreen(
                 cartItems = cartItems,
@@ -120,7 +116,6 @@ fun AppNavigation(productViewModel: ProductViewModel) {
                 navController = navController
             )
         }
-
         composable(route = AppRoutes.checkoutScreen) {
             CheckoutScreen(
                 navController = navController,

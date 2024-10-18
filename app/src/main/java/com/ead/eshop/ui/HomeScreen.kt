@@ -1,5 +1,6 @@
 package com.ead.eshop.ui
 
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -13,6 +14,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
@@ -23,7 +25,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -33,9 +37,11 @@ import androidx.compose.ui.unit.sp
 import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.constraintlayout.compose.Dimension
 import androidx.navigation.NavController
+import base64ToImageBitmap
 import coil.compose.rememberAsyncImagePainter
 import com.ead.eshop.AppRoutes
 import com.ead.eshop.R
+import com.ead.eshop.data.model.Category
 import com.ead.eshop.data.model.Product
 import com.ead.eshop.ui.components.AppBar
 import com.ead.eshop.utils.Resource
@@ -46,19 +52,27 @@ import java.util.Locale
 fun HomeScreen(
     navController: NavController,
     productViewModel: ProductViewModel,
-    onProductClick: (Product) -> Unit
 ) {
-    LaunchedEffect(Unit) {
-        productViewModel.fetchProducts()
-        productViewModel.fetchCategories()
-    }
+
 
     val productState by productViewModel.products.observeAsState()
     val categoryState by productViewModel.categories.observeAsState()
 
-    var selectedCategory by remember { mutableStateOf("All") }
+    var selectedCategory by remember { mutableStateOf("all") }
     var searchQuery by remember { mutableStateOf("") }
+
     val topBarVisibilityState = remember { mutableStateOf(true) }
+
+    val context = LocalContext.current
+    val tokenFlow = TokenManager.getToken(context).collectAsState(initial = null)
+    val token = tokenFlow.value
+
+    LaunchedEffect(token) {
+        token?.let {
+            productViewModel.fetchCategories(token)
+            productViewModel.fetchProducts(token)
+        }
+    }
 
     Scaffold(
         modifier = Modifier
@@ -220,7 +234,7 @@ fun HomeScreen(
             }
             Spacer(modifier = Modifier.height(10.dp))
 
-            // Category Buttons
+            // LazyRow for Category Buttons
             LazyRow(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -240,16 +254,13 @@ fun HomeScreen(
                                 )
                             }
                         }
-
                     }
                     is Resource.Error -> {
                         (categoryState as Resource.Error).message?.let {
                             item {
                                 Text(
                                     text = it.replaceFirstChar {
-                                        if (it.isLowerCase()) it.titlecase(
-                                            Locale.getDefault()
-                                        ) else it.toString()
+                                        if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString()
                                     },
                                     color = Color.Red,
                                     modifier = Modifier.align(Alignment.CenterHorizontally)
@@ -258,30 +269,28 @@ fun HomeScreen(
                         }
                     }
                     is Resource.Success -> {
-                        val categories = (categoryState as Resource.Success<List<String>>).data ?: emptyList()
-                        val allCategories = listOf("All") + categories
+                        val categories = (categoryState as Resource.Success<List<Category>>).data ?: emptyList()
+                        // Adding "All" category with an ID "all"
+                        val allCategories = listOf(Category("all", "All", "")) + categories
 
                         items(allCategories) { category ->
                             Button(
-                                onClick = { selectedCategory = category },
+                                onClick = { selectedCategory = category.id }, // Store category id
                                 colors = ButtonDefaults.buttonColors(
                                     containerColor = MaterialTheme.colorScheme.surfaceContainer
                                 ),
                                 shape = RoundedCornerShape(25.dp)
                             ) {
                                 Text(
-                                    text = category.replaceFirstChar {
+                                    text = category.name.replaceFirstChar {
                                         if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString()
                                     },
-                                    color = if (selectedCategory == category) Color.Black else Color(0xFF626262),
-                                    fontWeight = if (selectedCategory == category) FontWeight.Bold else FontWeight.Normal
+                                    color = if (selectedCategory == category.id) Color.Black else Color(0xFF626262),
+                                    fontWeight = if (selectedCategory == category.id) FontWeight.Bold else FontWeight.Normal
                                 )
                             }
                         }
-
                     }
-
-
                     null -> {
                         item {
                             Text("No categories available", color = Color.Gray)
@@ -289,6 +298,7 @@ fun HomeScreen(
                     }
                 }
             }
+
             Spacer(modifier = Modifier.height(10.dp))
 
             when (productState) {
@@ -313,16 +323,16 @@ fun HomeScreen(
                     }
                 }
                 is Resource.Success -> {
-                    val filteredProducts = (productState as Resource.Success<List<Product>>).data?.filter {
-                        (selectedCategory == "All" || it.category == selectedCategory) &&
-                                it.title.contains(searchQuery, ignoreCase = true)
+                    val filteredProducts = (productState as Resource.Success<List<Product>>).data?.filter { product ->
+                        (selectedCategory == "all" || product.categories.any { it.id == selectedCategory }) &&
+                                product.name.contains(searchQuery, ignoreCase = true)
                     }
 
                     if (filteredProducts.isNullOrEmpty()) {
                         Text(
                             text = "No products available",
                             modifier = Modifier.align(Alignment.CenterHorizontally),
-                            color =  MaterialTheme.colorScheme.surfaceContainer
+                            color = MaterialTheme.colorScheme.surfaceContainer
                         )
                     } else {
                         LazyRow(
@@ -330,14 +340,13 @@ fun HomeScreen(
                             contentPadding = PaddingValues(horizontal = 10.dp)
                         ) {
                             items(filteredProducts) { product ->
-                                // Favorite state rememberable
+                                // Product item layout
                                 var favouriteRemember by remember { mutableStateOf(true) }
 
                                 Column(
                                     modifier = Modifier
                                         .width(150.dp)
                                         .padding(4.dp)
-
                                 ) {
                                     Box(
                                         modifier = Modifier
@@ -348,43 +357,22 @@ fun HomeScreen(
                                             )
                                             .clip(RoundedCornerShape(10.dp))
                                             .clickable {
-                                                onProductClick(product)
-                                            },
-                                        contentAlignment = Alignment.Center
-
+                                                Log.d("Home Screen", product.id.toString())
+                                                navController.navigate(AppRoutes.productDetailsScreen + "/${product.id}")
+                                            }
                                     ) {
                                         Image(
-                                            painter = rememberAsyncImagePainter(model = product.image),
-                                            contentDescription = product.title,
+                                            bitmap = base64ToImageBitmap(product.image) ?: ImageBitmap(1, 1),
+                                            contentDescription = product.name,
                                             modifier = Modifier.fillMaxSize(),
                                             contentScale = ContentScale.Crop
-
-                                        )
-                                    }
-                                    Text(
-                                        text = product.title,
-                                        maxLines = 2,
-                                        overflow = TextOverflow.Ellipsis,
-                                        modifier = Modifier.width(150.dp).padding(vertical = 8.dp)
-                                    )
-
-                                    Row(
-                                        modifier = Modifier
-                                            .width(150.dp)
-                                            .fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.SpaceBetween
-                                    ) {
-                                        Text(
-                                            text = "LKR ${product.price}",
-                                            fontWeight = FontWeight(800),
-                                            color = Color.Black
-
                                         )
                                         Box(
                                             modifier = Modifier
                                                 .size(20.dp)
+                                                .align(Alignment.TopStart)
                                                 .background(
-                                                    MaterialTheme.colorScheme.surfaceContainer,
+                                                    color = MaterialTheme.colorScheme.surfaceContainer,
                                                     shape = CircleShape
                                                 )
                                                 .clip(CircleShape)
@@ -405,95 +393,14 @@ fun HomeScreen(
                                             )
                                         }
                                     }
-                                }
-                            }
-                        }
 
-                    }
-                }
-                null -> {
-                    Text(
-                        text = "No products available",
-                        modifier = Modifier.align(Alignment.CenterHorizontally),
-                        color = Color.Gray
-                    )
-                }
-            }
-            when (productState) {
-                is Resource.Loading -> {
-                    Box(
-                        modifier = Modifier.fillMaxWidth(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator(
-                            color = MaterialTheme.colorScheme.surfaceContainer,
-                            modifier = Modifier.size(24.dp)
-                        )
-                    }
-                }
-                is Resource.Error -> {
-                    (productState as Resource.Error).message?.let {
-                        Text(
-                            text = it,
-                            color = Color.Red,
-                            modifier = Modifier.align(Alignment.CenterHorizontally)
-                        )
-                    }
-                }
-                is Resource.Success -> {
-                    val filteredProducts = (productState as Resource.Success<List<Product>>).data?.filter {
-                        (selectedCategory == "All" || it.category == selectedCategory) &&
-                                it.title.contains(searchQuery, ignoreCase = true)
-                    }
-
-                    if (filteredProducts.isNullOrEmpty()) {
-                        Text(
-                            text = "No products available",
-                            modifier = Modifier.align(Alignment.CenterHorizontally),
-                            color =  MaterialTheme.colorScheme.surfaceContainer
-                        )
-                    } else {
-                        LazyRow(
-                            horizontalArrangement = Arrangement.spacedBy(10.dp),
-                            contentPadding = PaddingValues(horizontal = 10.dp)
-                        ) {
-                            items(filteredProducts) { product ->
-                                // Favorite state rememberable
-                                var favouriteRemember by remember { mutableStateOf(true) }
-
-                                Column(
-                                    modifier = Modifier
-                                        .width(150.dp)
-                                        .padding(4.dp)
-
-                                ) {
-                                    Box(
-                                        modifier = Modifier
-                                            .size(100.dp)
-                                            .background(
-                                                MaterialTheme.colorScheme.surfaceContainer,
-                                                shape = RoundedCornerShape(10.dp)
-                                            )
-                                            .clip(RoundedCornerShape(10.dp))
-                                            .clickable {
-                                                onProductClick(product)
-                                            },
-                                        contentAlignment = Alignment.Center
-
-                                    ) {
-                                        Image(
-                                            painter = rememberAsyncImagePainter(model = product.image),
-                                            contentDescription = product.title,
-                                            modifier = Modifier.fillMaxSize(),
-                                            contentScale = ContentScale.Crop
-
-                                        )
-                                    }
                                     Text(
-                                        text = product.title,
+                                        text = product.name,
                                         maxLines = 2,
                                         overflow = TextOverflow.Ellipsis,
-                                        modifier = Modifier.width(150.dp).padding(vertical = 8.dp)
+                                        modifier = Modifier
+                                            .width(150.dp)
+                                            .padding(vertical = 8.dp)
                                     )
 
                                     Row(
@@ -506,37 +413,11 @@ fun HomeScreen(
                                             text = "LKR ${product.price}",
                                             fontWeight = FontWeight(800),
                                             color = Color.Black
-
                                         )
-                                        Box(
-                                            modifier = Modifier
-                                                .size(20.dp)
-                                                .background(
-                                                    MaterialTheme.colorScheme.surfaceContainer,
-                                                    shape = CircleShape
-                                                )
-                                                .clip(CircleShape)
-                                                .clickable {
-                                                    favouriteRemember = !favouriteRemember
-                                                },
-                                            contentAlignment = Alignment.Center
-                                        ) {
-                                            Image(
-                                                painter = painterResource(
-                                                    id = if (favouriteRemember)
-                                                        R.drawable.heart_icon_2
-                                                    else R.drawable.heart_icon
-                                                ),
-                                                contentDescription = "Favourite Icon",
-                                                modifier = Modifier.padding(3.dp),
-                                                colorFilter = if (favouriteRemember) ColorFilter.tint(Color.Red) else null
-                                            )
-                                        }
                                     }
                                 }
                             }
                         }
-
                     }
                 }
                 null -> {
@@ -547,7 +428,6 @@ fun HomeScreen(
                     )
                 }
             }
-
         }
     }
 }

@@ -1,11 +1,15 @@
 package com.ead.eshop.data.model
 
 data class Product(
-    val id: Int,
-    val title: String,
-    val price: Double,
+    val id: String,
+    val name: String,
     val description: String,
-    val category: String,
-    val image: String,
-    val rating: Rating
+    val price: Double,
+    val quantity: Int,
+    val stock: Int,
+    val isActive: Boolean,
+    val lowStockThreshold: Int,
+    val vendorId: String,
+    val categories: List<Category>,
+    val image: String
 )

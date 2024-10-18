@@ -112,7 +112,7 @@ fun CartScreen(
                         // Product Image
                         AsyncImage(
                             model = product.image,
-                            contentDescription = product.title,
+                            contentDescription = product.name,
                             modifier = Modifier.size(60.dp)
                         )
 
@@ -126,7 +126,7 @@ fun CartScreen(
                         ) {
                             // Full Product Title
                             Text(
-                                text = product.title,
+                                text = product.name,
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 16.sp
                             )
