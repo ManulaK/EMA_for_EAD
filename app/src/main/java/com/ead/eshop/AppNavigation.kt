@@ -1,5 +1,6 @@
 package com.ead.eshop
 
+import CheckoutScreen
 import OrderScreen
 import android.util.Log
 import androidx.compose.foundation.layout.Box
@@ -14,7 +15,6 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.ead.eshop.ui.CartScreen
-import com.ead.eshop.ui.CheckoutScreen
 import com.ead.eshop.ui.LoginScreen
 
 import com.ead.eshop.ui.ProductDetailsScreen
@@ -121,10 +121,9 @@ fun AppNavigation(productViewModel: ProductViewModel) {
             )
         }
 
-
-        // Checkout page logic
         composable(route = AppRoutes.checkoutScreen) {
             CheckoutScreen(
+                navController = navController,
                 cartItems = cartItems,
                 onClearCart = {
                     cartItems.clear()
@@ -143,5 +142,7 @@ fun AppNavigation(productViewModel: ProductViewModel) {
         }
     }
 }
+
+
 
 

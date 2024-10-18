@@ -6,7 +6,10 @@ import com.ead.eshop.data.model.AuthRequest
 import com.ead.eshop.data.model.LoginResponse
 import com.ead.eshop.data.model.RegisterRequest
 import com.ead.eshop.data.model.RegisterResponse
+import com.ead.eshop.data.model.UpdateRequest
+import com.ead.eshop.data.model.UserDeactivateResponse
 import com.ead.eshop.data.model.UserDetailsResponse
+import com.ead.eshop.data.model.UserUpdateResponse
 import retrofit2.Response
 
 class AuthRepository {
@@ -44,5 +47,13 @@ class AuthRepository {
 
     suspend fun getUser( token: String): Response<UserDetailsResponse> {
         return RetrofitInstance.api.getMe(token)
+    }
+
+    suspend fun updateMe(token: String, updateRequest: UpdateRequest): Response<UserUpdateResponse> {
+        return RetrofitInstance.api.updateMe("Bearer $token", updateRequest)
+    }
+
+    suspend fun deactivateUser( token: String): Response<UserDeactivateResponse> {
+        return RetrofitInstance.api.deactivateMe(token)
     }
 }

@@ -1,6 +1,7 @@
 package com.ead.eshop.ui
 
 import android.annotation.SuppressLint
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -50,6 +51,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.ead.eshop.AppRoutes
 import com.ead.eshop.R
+import com.ead.eshop.data.model.Address
+import com.ead.eshop.data.model.UpdateRequest
 import com.ead.eshop.data.repository.AuthRepository
 import com.ead.eshop.viewmodels.ProfileViewModel
 import com.ead.eshop.viewmodels.factorys.ProfileViewModelFactory
@@ -57,7 +60,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
@@ -67,6 +69,9 @@ fun ProfileScreen(navController: NavHostController) {
     val token = tokenFlow.value
 
     val profileViewModel: ProfileViewModel = viewModel(factory = ProfileViewModelFactory(AuthRepository()))
+
+    // State for showing the confirmation dialog
+    var showDeactivateDialog by remember { mutableStateOf(false) }
 
     // Load user data if token is available
     LaunchedEffect(token) {
@@ -253,7 +258,21 @@ fun ProfileScreen(navController: NavHostController) {
             Spacer(modifier = Modifier.height(8.dp))
                 Button(
                     onClick = {
-                        // Handle update logic here
+                        val updateRequest = UpdateRequest(
+                            firstName = firstName,
+                            lastName = lastName,
+                            dateOfBirth = dateOfBirth,
+                            email = email,
+                            address = Address(
+                                street = street,
+                                city = city,
+                                state = state,
+                                postalCode = postalCode,
+                                country = country
+                            )
+                        )
+                        profileViewModel.updateUserData(token ?: "", updateRequest ,context)
+                        Log.d("ProfileScreen", "Updated Data: $updateRequest")
                     },
                     modifier = Modifier.
                     align(Alignment.End),
@@ -262,6 +281,7 @@ fun ProfileScreen(navController: NavHostController) {
                 ) {
                     Text("Save")
                 }
+
             Spacer(modifier = Modifier.height(42.dp))
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -287,14 +307,50 @@ fun ProfileScreen(navController: NavHostController) {
                 }
                 ClickableText(
                     text = annotatedText,
-                    style = MaterialTheme.typography.labelLarge.copy(color = Color.Gray), // Overall text style
+                    style = MaterialTheme.typography.labelLarge.copy(color = Color.Gray),
                     onClick = { offset ->
                         annotatedText.getStringAnnotations(tag = "deactivate", start = offset, end = offset)
                             .firstOrNull()?.let {
-                                // Handle deactivate logic here
+                                showDeactivateDialog = true
                             }
                     }
                 )
+            }
+
+            // Deactivate confirmation dialog
+            if (showDeactivateDialog) {
+                AlertDialog(
+                    onDismissRequest = { showDeactivateDialog = false },
+                    title = { Text("Deactivate Account") },
+                    text = { Text("Are you sure you want to deactivate your account? This action cannot be undone.") },
+                    confirmButton = {
+                        TextButton(onClick = {
+                            if (token != null) {
+                                Log.d("ProfileScreen", "Deactivate: $token")
+                                profileViewModel.deactivateUser(token, context)
+                            }
+                            showDeactivateDialog = false
+                            // Navigate to deactivation flow or call your deactivate logic
+                        }) {
+                            Text("Confirm", color = Color.Red)
+                        }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = {
+                            showDeactivateDialog = false // Close the dialog without action
+                        }) {
+                            Text("Cancel")
+                        }
+                    }
+                )
+            }
+
+            if (profileViewModel.isDeactivated.value) {
+                LaunchedEffect(Unit) {
+                    navController.navigate(AppRoutes.loginScreen) {
+                        popUpTo(0)
+                    }
+                }
             }
         }
     }
