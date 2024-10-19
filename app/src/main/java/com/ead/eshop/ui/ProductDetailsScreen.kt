@@ -32,6 +32,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.ui.unit.dp
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -56,17 +57,22 @@ import coil.compose.rememberAsyncImagePainter
 import coil.compose.rememberImagePainter
 import com.ead.eshop.AppRoutes
 import com.ead.eshop.R
+import com.ead.eshop.data.model.AddToCartRequest
 import com.ead.eshop.data.model.Product
+import com.ead.eshop.viewmodels.ProductViewModel
 
+@SuppressLint("UnusedMaterialScaffoldPaddingParameter", "UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun ProductDetailsScreen(
     navController: NavController,
     product: Product,
+    productViewModel: ProductViewModel,
 ) {
     val context = LocalContext.current
 
     var quantity by remember { mutableIntStateOf(1) }
 
+    // Define a base price and total price
     val basePrice = product.price
     val totalPrice = basePrice * quantity
     val colorList = listOf(Color.Red, Color.Black, Color.Blue, Color.LightGray,)
@@ -74,10 +80,14 @@ fun ProductDetailsScreen(
     val imageList = List(4) { product.image }
     var selectedPicture by remember { mutableStateOf(imageList[0]) }
 
+    val tokenFlow = TokenManager.getToken(context).collectAsState(initial = null)
+    val token = tokenFlow.value
+
     Scaffold() {
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .background(color = Color.White)
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally,
             ) {
@@ -150,6 +160,7 @@ fun ProductDetailsScreen(
                                 color = if (selectedPicture == imageList[it]) MaterialTheme.colorScheme.surfaceContainer else Color.Transparent,
                                 shape = RoundedCornerShape(10.dp)
                             )
+                            .background(Color.White, shape = RoundedCornerShape(10.dp))
                             .padding(5.dp)
                             .clip(RoundedCornerShape(10.dp))
                     ) {
@@ -166,7 +177,10 @@ fun ProductDetailsScreen(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-
+                    .background(
+                        Color.White,
+                        shape = RoundedCornerShape(topStart = 15.dp, topEnd = 15.dp)
+                    )
             ) {
 
                 Row(
@@ -221,6 +235,10 @@ fun ProductDetailsScreen(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .background(
+                            Color.White,
+
+                            )
                         .padding(8.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.Bottom
@@ -320,7 +338,17 @@ fun ProductDetailsScreen(
                             .padding(end = 8.dp),
                         shape = RoundedCornerShape(10.dp),
                         onClick = {
-                            navController.navigate(AppRoutes.cartScreen)
+                            val addToCartRequest = AddToCartRequest(productId = product.id, quantity = quantity)
+                            if (token != null) {
+                                productViewModel.addToCart(
+                                    token = token,
+                                    addToCartRequest = addToCartRequest,
+                                    context = context,
+                                    navController = navController
+                                )
+                            } else {
+                                Toast.makeText(context, "Authentication required!", Toast.LENGTH_SHORT).show()
+                            }
                         }
                     ) {
                         Text(text = "Add to Cart", fontSize = 16.sp)

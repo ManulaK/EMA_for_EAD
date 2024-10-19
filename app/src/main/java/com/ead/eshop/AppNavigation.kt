@@ -92,6 +92,7 @@ fun AppNavigation(productViewModel: ProductViewModel) {
                     ProductDetailsScreen(
                         navController = navController,
                         product = product,
+                        productViewModel = productViewModel,
                     )
                 } else {
                     Log.e("Nav Host", "Product not found")

@@ -1,6 +1,7 @@
 package com.ead.eshop.data.repository
 
 import com.ead.eshop.data.api.RetrofitInstance
+import com.ead.eshop.data.model.AddToCartRequest
 import com.ead.eshop.data.model.Category
 import com.ead.eshop.data.model.Product
 
@@ -13,6 +14,10 @@ class ProductRepository {
 
     suspend fun getCategories(token :String): Response<List<Category>> {
         return RetrofitInstance.api.getCategories(token)
+    }
+
+    suspend fun addToCart(token: String, addToCartRequest: AddToCartRequest): Response<String> {
+        return RetrofitInstance.api.addToCart(token,addToCartRequest)
     }
 }
 

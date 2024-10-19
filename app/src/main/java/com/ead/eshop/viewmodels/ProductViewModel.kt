@@ -1,9 +1,16 @@
 package com.ead.eshop.viewmodels
 
+import android.content.Context
+import android.util.Log
+import android.widget.Toast
+import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.navigation.NavController
+import com.ead.eshop.AppRoutes
+import com.ead.eshop.data.model.AddToCartRequest
 import com.ead.eshop.data.model.Category
 import com.ead.eshop.data.model.Product
 import com.ead.eshop.data.repository.ProductRepository
@@ -18,6 +25,8 @@ class ProductViewModel(private val productRepository: ProductRepository) : ViewM
 
     private val _categories = MutableLiveData<Resource<List<Category>>>()
     val categories: LiveData<Resource<List<Category>>> get() = _categories
+
+    private var addToCartStatus = mutableStateOf<String?>(null)
 
     fun fetchProducts(token: String) {
         _products.value = Resource.Loading()
@@ -62,4 +71,28 @@ class ProductViewModel(private val productRepository: ProductRepository) : ViewM
             }
         }
     }
+
+    fun addToCart(token: String, addToCartRequest: AddToCartRequest, context: Context, navController: NavController) {
+        val bearerToken = "Bearer $token"
+        viewModelScope.launch {
+            try {
+                val response = productRepository.addToCart(bearerToken, addToCartRequest) // Make sure you pass the request object
+                if (response.isSuccessful) {
+                    addToCartStatus.value = response.body()
+                    Toast.makeText(context, "Product added to cart successfully!", Toast.LENGTH_SHORT).show()
+
+                    // Navigate to the cart screen upon success
+                    navController.navigate(AppRoutes.cartScreen)
+
+                } else {
+                    Toast.makeText(context, "Failed to add product. Please try again.", Toast.LENGTH_SHORT).show()
+                }
+            } catch (e: Exception) {
+
+                    Log.e("AddToCartError", "Error adding to cart: ${e.message}", e)
+                    Toast.makeText(context, "An error occurred: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
+        }
+    }
+
 }

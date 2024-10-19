@@ -1,5 +1,6 @@
 package com.ead.eshop.data.api
 
+import com.ead.eshop.data.model.AddToCartRequest
 import com.ead.eshop.data.model.AuthRequest
 import com.ead.eshop.data.model.Category
 import com.ead.eshop.data.model.LoginResponse
@@ -54,4 +55,10 @@ interface ApiService {
     suspend fun getCategories(
         @Header("Authorization") token: String
     ): Response<List<Category>>
+
+    @POST("cart/add")
+    suspend fun addToCart(
+        @Header("Authorization") token: String,
+        @Body addToCartRequest: AddToCartRequest
+    ): Response<String>
 }
