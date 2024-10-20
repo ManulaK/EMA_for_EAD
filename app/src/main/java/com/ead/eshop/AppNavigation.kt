@@ -102,20 +102,13 @@ fun AppNavigation(productViewModel: ProductViewModel) {
             }
         }
         composable(route = AppRoutes.cartScreen) {
-            CartScreen(
-                cartItems = cartItems,
-                onCheckout = {
-                    navController.navigate(AppRoutes.checkoutScreen)
-                },
-                onProductClick = { product ->
-                    navController.navigate(AppRoutes.productDetailsScreen + "/${product.id}")
-                },
-                onRemoveItem = { product ->
-                    // Logic to remove item from cart, or update state
-
-                },
-                navController = navController
-            )
+            token?.let { it1 ->
+                CartScreen(
+                    token= it1,
+                    navController = navController,
+                    productViewModel = productViewModel,
+                )
+            }
         }
         composable(route = AppRoutes.checkoutScreen) {
             CheckoutScreen(
