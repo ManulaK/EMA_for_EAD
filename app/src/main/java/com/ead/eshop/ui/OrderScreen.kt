@@ -1,191 +1,202 @@
+package com.ead.eshop.ui
+
+
+import android.annotation.SuppressLint
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+//noinspection UsingMaterialAndMaterial3Libraries
+import androidx.compose.material.IconButton
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import base64ToImageBitmap
+import com.ead.eshop.AppRoutes
 import com.ead.eshop.R
-import com.ead.eshop.data.model.Order
-import com.ead.eshop.data.model.OrderStatusUpdate
-import com.ead.eshop.data.model.sampleOrders
-import com.pushpal.jetlime.ItemsList
-import com.pushpal.jetlime.JetLimeColumn
-import com.pushpal.jetlime.JetLimeDefaults
-import com.pushpal.jetlime.JetLimeEvent
-import com.pushpal.jetlime.JetLimeEventDefaults
+import com.ead.eshop.data.model.Cart
+import com.ead.eshop.data.model.CartItem
+import com.ead.eshop.data.model.OrderResponse
+import com.ead.eshop.data.model.OrderResponseItem
+import com.ead.eshop.utils.Resource
+import com.ead.eshop.viewmodels.ProductViewModel
 
 @Composable
-fun OrderScreen(navController: NavController) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 8.dp)
-        ) {
-            androidx.compose.material.IconButton(
-                onClick = {
-                    navController.popBackStack()
-                },
-                modifier = Modifier
-                    .background(
-                        color = MaterialTheme.colorScheme.surfaceContainer,
-                        shape = CircleShape
-                    )
-                    .clip(CircleShape)
+fun OrderScreen(
+    navController: NavController,
+    productViewModel: ProductViewModel,
+    token: String
+) {
+    val orders by productViewModel.orders.observeAsState(Resource.Loading())
+
+    LaunchedEffect(Unit) {
+        productViewModel.fetchOrders(token)
+    }
+
+    when (orders) {
+        is Resource.Loading -> {
+            Box(
+                modifier = Modifier.fillMaxWidth(),
+                contentAlignment = Alignment.Center
             ) {
-                Image(
-                    painter = painterResource(id = R.drawable.back_icon),
-                    contentDescription = null
+                androidx.compose.material3.CircularProgressIndicator(
+                    color = MaterialTheme.colorScheme.surfaceContainer,
+                    modifier = Modifier.size(24.dp)
                 )
             }
-            Text(
-                text = "Orders",
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(start = 8.dp)// Align text with the back button
-            )
         }
+        is Resource.Success -> {
+            val orderData = (orders as Resource.Success).data
+            Log.d("Cart Screen", orders.toString())
+            OrderContent(orderData,navController)
+        }
+        is Resource.Error -> {
+            val errorMessage = (orders as Resource.Error).message
+            Box(
+                modifier = Modifier.fillMaxWidth(),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = errorMessage ?: "Unknown error occurred",
+                    color = Color.Red
+                )
+            }
 
-        // List of orders
-        sampleOrders.forEach { order ->
-            OrderCard(order = order)
-            Spacer(modifier = Modifier.height(12.dp)) // Space between order cards
         }
     }
 }
 
 @Composable
-fun OrderCard(order: Order) {
-    Card(
-        shape = RoundedCornerShape(10.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(4.dp),
-        modifier = Modifier
-            .fillMaxWidth()
-            .wrapContentHeight()
-            .padding(vertical = 8.dp)
-    ) {
+fun OrderContent(ordersResponse: List<OrderResponse>?, navController: NavController) {
+    ordersResponse?.let {
         Column(
             modifier = Modifier
+                .fillMaxSize()
                 .padding(16.dp)
         ) {
-            // Order Info
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 16.dp)
             ) {
-                Column {
-                    Text(
-                        text = "Order #${order.id}",
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color(0xFF333333)
-                    )
-                    Text(
-                        text = order.date,
-                        fontSize = 14.sp,
-                        color = Color(0xFF666666) // Gray color
+                IconButton(
+                    onClick = { navController.popBackStack() },
+                    modifier = Modifier
+                        .align(Alignment.CenterStart)
+                        .background(
+                            color = MaterialTheme.colorScheme.surfaceContainer,
+                            shape = CircleShape
+                        )
+                        .clip(CircleShape)
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.back_icon),
+                        contentDescription = null
                     )
                 }
+
                 Text(
-                    text = "$${order.total}",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFF333333)
+                    text = "Your Orders".uppercase(),
+                    color = Color.Gray,
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        fontWeight = FontWeight.Bold
+                    ),
+                    modifier = Modifier.align(Alignment.Center)
                 )
             }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // Status and Progress bar
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(
-                    text = order.status,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = Color.Gray
-                )
-                CircularProgressIndicator(
-                    progress = { order.progress },
-                    modifier = Modifier.size(32.dp),
-                    color = if (order.progress == 1.0f) Color(0xFF4CAF50) else Color(0xFFFFC107), // Green if delivered, yellow otherwise
-                )
+            LazyColumn(modifier = Modifier.weight(1f)) {
+                // Loop through orders and display each order's items
+                items(it) { order ->
+                    order.items.forEach { item ->
+                        OrderItemView(item)
+                    }
+                }
             }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Timeline of status updates
-            OrderStatusTimeline(order.statusUpdates)
         }
+    } ?: run {
+        Text("Your cart is empty.", style = MaterialTheme.typography.headlineMedium)
     }
 }
 
 @Composable
-fun OrderStatusTimeline(statusUpdates: List<OrderStatusUpdate>) {
-    val items = remember { statusUpdates }
-    JetLimeColumn(
-        itemsList = ItemsList(items),
-        key = { _, item -> item.status },
-        style = JetLimeDefaults.columnStyle(
-            lineBrush = JetLimeDefaults.lineSolidBrush(color = Color.LightGray),
-            lineThickness = 2.dp,
-        ),
-    ) { _, item, position ->
-        JetLimeEvent(
-            style = JetLimeEventDefaults.eventStyle(
-                position = position,
-                pointColor  = Color.LightGray,
-                pointFillColor  = Color.LightGray,
-                pointStrokeColor   = Color.DarkGray,
-                pointRadius = 6.dp,
-            )
-        ) {
-            ComposableContent(item = item)
-        }
-    }
-}
-
-@Composable
-fun ComposableContent(item: OrderStatusUpdate) {
-    Box(
+fun OrderItemView(item: OrderResponseItem) {
+    Row(
         modifier = Modifier
-            .size(12.dp)
-            .clip(CircleShape)
-    )
+            .fillMaxWidth()
+            .padding(vertical = 8.dp)
+            .background(
+                MaterialTheme.colorScheme.surfaceContainer,
+                shape = RoundedCornerShape(8.dp)
+            )
+            .padding(16.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        // Image section
+        Box(
+            modifier = Modifier
+                .size(64.dp)
+        ) {
+            Image(
+                bitmap = base64ToImageBitmap(item.imageBase64) ?: ImageBitmap(1, 1),
+                contentDescription = "Product Image",
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .clip(RoundedCornerShape(8.dp))
+            )
+        }
 
-    // Status information
-    Column {
-        Text(
-            text = item.status,
-            fontSize = 14.sp,
-            fontWeight = FontWeight.Bold,
-            color = Color(0xFF333333)
-        )
-        Text(
-            text = item.date,
-            fontSize = 12.sp,
-            color = Color(0xFF666666)
-        )
+        Spacer(modifier = Modifier.width(16.dp))
+
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = "Product Name: ${item.productName}",
+                style = MaterialTheme.typography.bodyMedium
+            )
+            Text(
+                text = "Description: ${item.description}",
+                style = MaterialTheme.typography.bodyMedium
+            )
+            Text(
+                text = "Quantity: ${item.quantity}",
+                style = MaterialTheme.typography.bodyMedium
+            )
+            Text(
+                text = "Price: LKR ${item.price}",
+                style = MaterialTheme.typography.bodyMedium
+            )
+        }
     }
 }
+
+

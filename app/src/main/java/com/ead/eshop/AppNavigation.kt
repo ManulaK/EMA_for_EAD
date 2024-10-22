@@ -1,7 +1,6 @@
 package com.ead.eshop
 
 import CheckoutScreen
-import OrderScreen
 import android.util.Log
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -22,13 +21,16 @@ import com.ead.eshop.ui.HomeScreen
 import com.ead.eshop.ui.WelcomeScreen
 
 import androidx.compose.runtime.*
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.ead.eshop.data.model.Product
+import com.ead.eshop.ui.OrderScreen
 import com.ead.eshop.ui.ProfileScreen
 import com.ead.eshop.ui.RegisterScreen
 import com.ead.eshop.ui.SettingsScreen
+import com.ead.eshop.utils.Resource
 import com.ead.eshop.viewmodels.ProductViewModel
 import kotlinx.coroutines.launch
 
@@ -87,20 +89,17 @@ fun AppNavigation(productViewModel: ProductViewModel) {
         composable(route = AppRoutes.productDetailsScreen + "/{productId}") { backStackEntry ->
             val productId = backStackEntry.arguments?.getString("productId")
             if (productId != null) {
-                val product = productViewModel.products.value?.data?.find { it.id == productId}
-                if (product != null) {
-                    ProductDetailsScreen(
-                        navController = navController,
-                        product = product,
-                        productViewModel = productViewModel,
-                    )
-                } else {
-                    Log.e("Nav Host", "Product not found")
-                }
+                ProductDetailsScreen(
+                    navController = navController,
+                    productId = productId,
+                    productViewModel = productViewModel
+                )
             } else {
                 Log.e("Nav Host", "Invalid or null productId")
             }
         }
+
+
         composable(route = AppRoutes.cartScreen) {
             token?.let { it1 ->
                 CartScreen(
@@ -113,11 +112,6 @@ fun AppNavigation(productViewModel: ProductViewModel) {
         composable(route = AppRoutes.checkoutScreen) {
             CheckoutScreen(
                 navController = navController,
-                cartItems = cartItems,
-                onClearCart = {
-                    cartItems.clear()
-                    navController.navigate(AppRoutes.homeScreen)
-                }
             )
         }
         composable(route = AppRoutes.profileScreen) {
@@ -127,7 +121,12 @@ fun AppNavigation(productViewModel: ProductViewModel) {
             SettingsScreen(navController)
         }
         composable(route = AppRoutes.orderScreen) {
-            OrderScreen(navController)
+            token?.let { it1 ->
+                OrderScreen(navController,
+                    productViewModel = productViewModel,
+                    it1
+                )
+            }
         }
     }
 }

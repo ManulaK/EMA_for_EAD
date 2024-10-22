@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1015149302895",
+    "project_id": "ead-eshop",
+    "storage_bucket": "ead-eshop.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1015149302895:android:061788ccc1e84f54ece99a",
+        "android_client_info": {
+          "package_name": "com.ead.eshop"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCthz0PNsb2HZdulYX54u6iS4bekw5RVHY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

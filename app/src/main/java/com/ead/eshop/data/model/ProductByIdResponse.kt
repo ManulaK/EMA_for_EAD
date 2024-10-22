@@ -1,6 +1,6 @@
 package com.ead.eshop.data.model
 
-data class Product(
+data class ProductByIdResponse (
     val id: String,
     val name: String,
     val description: String,
@@ -10,7 +10,7 @@ data class Product(
     val isActive: Boolean,
     val lowStockThreshold: Int,
     val vendorId: String,
+    val vendor: Vendor,
     val categories: List<Category>,
     val image: String
 )
-

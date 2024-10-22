@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.jetbrains.kotlin.android)
+    id("com.google.gms.google-services")
 }
 
 android {
@@ -78,5 +79,8 @@ dependencies {
     implementation (libs.constraintlayout.compose)
     implementation (libs.androidx.material)
     implementation(libs.jetlime)
-    implementation (libs.logging.interceptor) // or latest version
+    implementation (libs.logging.interceptor)
+    implementation(platform("com.google.firebase:firebase-bom:33.4.0"))
+    implementation ("com.google.firebase:firebase-messaging:24.0.2")
+
 }

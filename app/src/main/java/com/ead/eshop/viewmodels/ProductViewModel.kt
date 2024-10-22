@@ -14,7 +14,12 @@ import com.ead.eshop.data.model.AddToCartRequest
 import com.ead.eshop.data.model.AddToCartResponse
 import com.ead.eshop.data.model.Cart
 import com.ead.eshop.data.model.Category
+import com.ead.eshop.data.model.OrderRequest
+import com.ead.eshop.data.model.OrderResponse
 import com.ead.eshop.data.model.Product
+import com.ead.eshop.data.model.ProductByIdResponse
+import com.ead.eshop.data.model.RateVendorRequest
+import com.ead.eshop.data.model.RateVendorResponse
 import com.ead.eshop.data.repository.ProductRepository
 import com.ead.eshop.utils.Resource
 
@@ -25,13 +30,23 @@ class ProductViewModel(private val productRepository: ProductRepository) : ViewM
     private val _products = MutableLiveData<Resource<List<Product>>>()
     val products: LiveData<Resource<List<Product>>> get() = _products
 
+    private val _product = MutableLiveData<Resource<ProductByIdResponse>>()
+    val product: LiveData<Resource<ProductByIdResponse>> get() = _product
+
     private val _categories = MutableLiveData<Resource<List<Category>>>()
     val categories: LiveData<Resource<List<Category>>> get() = _categories
 
     private val _cartItems = MutableLiveData<Resource<Cart>>()
     val cartItems: LiveData<Resource<Cart>> = _cartItems
 
+    private val _orders = MutableLiveData <Resource<List<OrderResponse>>>()
+    val orders: LiveData<Resource<List<OrderResponse>>> = _orders
+
     private var addToCartStatus = mutableStateOf<AddToCartResponse?>(null)
+
+    private var createOrderStatus = mutableStateOf<OrderResponse?>(null)
+
+    private var rateVendorStatus = mutableStateOf<RateVendorResponse?>(null)
 
     fun fetchProducts(token: String) {
         _products.value = Resource.Loading()
@@ -54,6 +69,29 @@ class ProductViewModel(private val productRepository: ProductRepository) : ViewM
             }
         }
     }
+
+    fun fetchProductById(token: String , id: String) {
+        _product.value = Resource.Loading()
+        val bearerToken = "Bearer $token"
+
+        viewModelScope.launch {
+            try {
+                val response = productRepository.getProductById(bearerToken, id)
+                if (response.isSuccessful) {
+                    response.body()?.let {
+                        _product.value = Resource.Success(it)
+                    } ?: run {
+                        _product.value = Resource.Error("Failed to load product.")
+                    }
+                } else {
+                    _product.value = Resource.Error("Error code: ${response.code()}")
+                }
+            } catch (e: Exception) {
+                _product.value = Resource.Error("Error: ${e.localizedMessage}")
+            }
+        }
+    }
+
 
     fun fetchCategories(token :String) {
         val bearerToken = "Bearer $token"
@@ -128,4 +166,72 @@ class ProductViewModel(private val productRepository: ProductRepository) : ViewM
         }
     }
 
+    fun fetchOrders(token: String) {
+        val bearerToken = "Bearer $token"
+        _orders.value = Resource.Loading()
+
+        viewModelScope.launch {
+            try {
+                val response = productRepository.getMyOrders(bearerToken)
+                if (response.isSuccessful) {
+                    val cart = response.body()
+
+                    cart?.let {
+                        // If cart is not null, update the state with fetched data
+                        _orders.value = Resource.Success(it)
+                    } ?: run {
+                        // If cart is null, update with an error message
+                        _orders.value = Resource.Error("Order data is null.")
+                    }
+                } else {
+                    // Handle the case where the response is not successful
+                    _orders.value = Resource.Error("Failed to load orders. Error code: ${response.code()}")
+                }
+            } catch (e: Exception) {
+                // Handle exceptions like network errors or JSON parsing issues
+                _orders.value = Resource.Error("An error occurred: ${e.localizedMessage}")
+            }
+        }
+    }
+
+    fun makeOrder(token: String, orderRequest: OrderRequest, context: Context, navController: NavController) {
+        val bearerToken = "Bearer $token"
+        viewModelScope.launch {
+            try {
+                val response = productRepository.createOrder(bearerToken, orderRequest)
+                if (response.isSuccessful) {
+                    createOrderStatus.value = response.body()
+                    Toast.makeText(context, "Order placed successfully!", Toast.LENGTH_SHORT).show()
+
+                    // Navigate to the cart screen upon success
+                    navController.navigate(AppRoutes.cartScreen)
+
+                } else {
+                    Toast.makeText(context, "Failed to placed order, Please try again.", Toast.LENGTH_SHORT).show()
+                }
+            } catch (e: Exception) {
+
+                Log.e("CreateOrderResponse", "Error adding to cart: ${e.message}", e)
+                Toast.makeText(context, "An error occurred: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    fun rateVendor(token: String, rateVendorRequest: RateVendorRequest, id: String, context: Context) {
+        val bearerToken = "Bearer $token"
+        viewModelScope.launch {
+            try {
+                val response = productRepository.rateVendor(bearerToken, rateVendorRequest, id)
+                if (response.isSuccessful) {
+                    rateVendorStatus.value = response.body()
+                    Toast.makeText(context, "Vendor rated successfully!", Toast.LENGTH_SHORT).show()
+
+                } else {
+                    Toast.makeText(context, "Failed to placed order, Please try again.", Toast.LENGTH_SHORT).show()
+                }
+            } catch (e: Exception) {
+                Toast.makeText(context, "An error occurred: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
 }

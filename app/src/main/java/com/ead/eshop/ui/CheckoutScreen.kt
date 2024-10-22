@@ -19,12 +19,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.ead.eshop.R
-import com.ead.eshop.data.model.Product
+
 
 @Composable
-fun CheckoutScreen(navController: NavController, cartItems: List<Pair<Product, Int>>, onClearCart: () -> Unit) {
+fun CheckoutScreen(navController: NavController) {
     var cardNumber by remember { mutableStateOf("**** **** **** 6522") }
-    var cardHolder by remember { mutableStateOf("Hikmet Atceken") }
+    var cardHolder by remember { mutableStateOf("Manula Kavinda") }
     var expiryDate by remember { mutableStateOf("07/23") }
     var cvc by remember { mutableStateOf("***") }
     var saveCardChecked by remember { mutableStateOf(false) }
@@ -36,17 +36,15 @@ fun CheckoutScreen(navController: NavController, cartItems: List<Pair<Product, I
                     .fillMaxSize()
                     .padding(paddingValues)
             ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
+                Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(bottom = 24.dp, start = 16.dp , top = 16.dp)
+                        .padding(16.dp)
                 ) {
                     androidx.compose.material.IconButton(
-                        onClick = {
-                            navController.popBackStack()
-                        },
+                        onClick = { navController.popBackStack() },
                         modifier = Modifier
+                            .align(Alignment.CenterStart)
                             .background(
                                 color = MaterialTheme.colorScheme.surfaceContainer,
                                 shape = CircleShape
@@ -58,14 +56,16 @@ fun CheckoutScreen(navController: NavController, cartItems: List<Pair<Product, I
                             contentDescription = null
                         )
                     }
+
                     Text(
-                        text = "Checkout Order",
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(start = 8.dp)
+                        text = "Checkout".uppercase(),
+                        color = Color.Gray,
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            fontWeight = FontWeight.Bold
+                        ),
+                        modifier = Modifier.align(Alignment.Center)
                     )
                 }
-
                 // Main content
                 Column(
                     modifier = Modifier
@@ -154,7 +154,8 @@ fun CheckoutScreen(navController: NavController, cartItems: List<Pair<Product, I
                     // Confirm Button
                     Button(
                         onClick = {
-                            onClearCart()
+
+
                         },
                         colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.onPrimaryContainer),
                         modifier = Modifier
@@ -162,7 +163,7 @@ fun CheckoutScreen(navController: NavController, cartItems: List<Pair<Product, I
                             .height(50.dp),
                         shape = RoundedCornerShape(10.dp),
                     ) {
-                        Text("Confirm", color = Color.White, fontSize = 18.sp)
+                        Text("Pay (LKR 2353.73)", color = Color.White, fontSize = 18.sp)
                     }
                 }
             }

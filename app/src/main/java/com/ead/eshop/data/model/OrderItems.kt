@@ -1,10 +1,10 @@
 package com.ead.eshop.data.model
 
-data class CartItem(
-    val id: String?,
+data class OrderItems (
     val productId: String,
     val quantity: Int,
     val price: Double,
-    val total: Double,
-    val productDetails: ProductDetails
+    val vendorId: String,
+    val status: String
 )
+
