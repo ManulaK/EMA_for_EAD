@@ -180,12 +180,8 @@ fun OrderItemView(item: OrderResponseItem) {
 
         Column(modifier = Modifier.weight(1f)) {
             Text(
-                text = "Product Name: ${item.productName}",
-                style = MaterialTheme.typography.bodyMedium
-            )
-            Text(
-                text = "Description: ${item.description}",
-                style = MaterialTheme.typography.bodyMedium
+                text = "${item.productName}",
+                style = MaterialTheme.typography.labelLarge
             )
             Text(
                 text = "Quantity: ${item.quantity}",
@@ -195,8 +191,29 @@ fun OrderItemView(item: OrderResponseItem) {
                 text = "Price: LKR ${item.price}",
                 style = MaterialTheme.typography.bodyMedium
             )
+
+            // Order status as a tag
+            Box(
+                modifier = Modifier
+                    .padding(top = 8.dp)
+                    .background(
+                        color = when (item.status) {
+                            "Pending" -> MaterialTheme.colorScheme.secondary
+                            "Delivered" -> MaterialTheme.colorScheme.primary
+                            else -> MaterialTheme.colorScheme.surfaceVariant
+                        },
+                        shape = RoundedCornerShape(16.dp)
+                    )
+                    .padding(horizontal = 8.dp, vertical = 4.dp)
+            ) {
+                Text(
+                    text = item.status,
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        color = MaterialTheme.colorScheme.onPrimary
+                    )
+                )
+            }
         }
     }
 }
-
 

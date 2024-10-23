@@ -419,7 +419,10 @@ fun ProductDetailsScreen(
                                         ProductId = product.id,
                                         Quantity = quantity,
                                         Price = product.price,
-                                        vendorId = product.vendorId
+                                        vendorId = product.vendorId,
+                                        ProductName = product.name,
+                                        Description = product.description,
+                                        imageBase64 = product.image
                                     )
 
                                     // Create the OrderRequest with this single item

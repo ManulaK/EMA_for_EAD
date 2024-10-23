@@ -261,7 +261,10 @@ fun CheckoutButton(totalAmount: Double ,navController:NavController, cart: Cart?
                         ProductId = cartItem.productId,
                         Quantity = cartItem.quantity,
                         Price = cartItem.price,
-                        vendorId = cartItem.productDetails.vendorId
+                        vendorId = cartItem.productDetails.vendorId,
+                        ProductName = cartItem.productDetails.name,
+                        Description = cartItem.productDetails.description,
+                        imageBase64 = cartItem.productDetails.imageBase64
                     )
                 }
                 val orderRequest = OrderRequest(
