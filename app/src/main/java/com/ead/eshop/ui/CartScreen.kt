@@ -3,6 +3,7 @@ package com.ead.eshop.ui
 
 import android.annotation.SuppressLint
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -28,6 +29,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
@@ -36,6 +38,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -44,8 +47,12 @@ import androidx.navigation.NavController
 import base64ToImageBitmap
 import com.ead.eshop.AppRoutes
 import com.ead.eshop.R
+import com.ead.eshop.data.model.Address
 import com.ead.eshop.data.model.Cart
 import com.ead.eshop.data.model.CartItem
+import com.ead.eshop.data.model.OrderItems
+import com.ead.eshop.data.model.OrderRequest
+import com.ead.eshop.data.model.UpdateRequest
 import com.ead.eshop.utils.Resource
 import com.ead.eshop.viewmodels.ProductViewModel
 
@@ -76,7 +83,7 @@ fun CartScreen(
         is Resource.Success -> {
             val cart = (cartItems as Resource.Success).data
             Log.d("Cart Screen", cart.toString())
-            CartContent(cart,navController)
+            CartContent(cart,navController ,productViewModel )
         }
         is Resource.Error -> {
             val errorMessage = (cartItems as Resource.Error).message
@@ -95,7 +102,9 @@ fun CartScreen(
 }
 
 @Composable
-fun CartContent(cart: Cart?, navController: NavController) {
+fun CartContent(cart: Cart?, navController: NavController ,productViewModel: ProductViewModel) {
+
+    Log.d("Cart", "$cart")
     cart?.let {
         Column(
             modifier = Modifier
@@ -139,7 +148,7 @@ fun CartContent(cart: Cart?, navController: NavController) {
             }
             Spacer(modifier = Modifier.height(16.dp))
             CartSummary(it.totalAmount,242.60,(it.totalAmount + 242.60))
-            CheckoutButton((it.totalAmount + 242.60),navController)
+            CheckoutButton((it.totalAmount + 242.60),navController ,cart ,productViewModel)
         }
     } ?: run {
         Text("Your cart is empty.", style = MaterialTheme.typography.headlineMedium)
@@ -240,12 +249,31 @@ fun CartSummary(subtotal: Double, shippingCost: Double, total: Double) {
 
 @SuppressLint("DefaultLocale")
 @Composable
-fun CheckoutButton(totalAmount: Double ,navController:NavController) {
+fun CheckoutButton(totalAmount: Double ,navController:NavController, cart: Cart? ,productViewModel: ProductViewModel ) {
 
     val formattedTotal = String.format("%.2f", totalAmount)
+
     Button(
         onClick = {
-            navController.navigate(AppRoutes.checkoutScreen)
+            if (cart != null) {
+                val orderItems = cart.items.map { cartItem ->
+                    OrderItems(
+                        ProductId = cartItem.productId,
+                        Quantity = cartItem.quantity,
+                        Price = cartItem.price,
+                        vendorId = cartItem.productDetails.vendorId
+                    )
+                }
+                val orderRequest = OrderRequest(
+                    Items = orderItems,
+                    total = totalAmount
+                )
+                // Set the order request in the ViewModel
+                productViewModel.setOrderRequest(orderRequest)
+
+                // Navigate to the checkout screen
+                navController.navigate(AppRoutes.checkoutScreen)
+            }
         },
         colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.onPrimaryContainer),
         modifier = Modifier

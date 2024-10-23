@@ -6,19 +6,23 @@ import androidx.compose.ui.graphics.asImageBitmap
 import java.io.ByteArrayOutputStream
 
 // Function to convert base64 string to ImageBitmap
-fun base64ToImageBitmap(base64String: String): ImageBitmap? {
-    return try {
-        // Remove the base64 header (e.g., "data:image/jpeg;base64,") if present
-        val cleanBase64String = base64String.substringAfter(",")
-        // Decode the base64 string into a byte array
-        val imageBytes = Base64.decode(cleanBase64String, Base64.DEFAULT)
-        // Convert the byte array to a Bitmap
-        val bitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
-        // Convert the Bitmap to ImageBitmap
-        bitmap?.asImageBitmap()
-    } catch (e: Exception) {
-        e.printStackTrace()
-        null
+fun base64ToImageBitmap(base64String: String?): ImageBitmap? {
+    return if (!base64String.isNullOrEmpty()) {
+        try {
+            // Remove the base64 header if present
+            val cleanBase64String = base64String.substringAfter(",")
+            // Decode the base64 string into a byte array
+            val imageBytes = Base64.decode(cleanBase64String, Base64.DEFAULT)
+            // Convert the byte array to a Bitmap
+            val bitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
+            // Convert the Bitmap to ImageBitmap
+            bitmap?.asImageBitmap()
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
+    } else {
+        null // Return null if the base64 string is null or empty
     }
 }
 

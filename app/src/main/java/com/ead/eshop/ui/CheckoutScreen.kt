@@ -6,10 +6,12 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -19,15 +21,22 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.ead.eshop.R
+import com.ead.eshop.viewmodels.ProductViewModel
 
 
 @Composable
-fun CheckoutScreen(navController: NavController) {
+fun CheckoutScreen(navController: NavController , productViewModel: ProductViewModel) {
     var cardNumber by remember { mutableStateOf("**** **** **** 6522") }
     var cardHolder by remember { mutableStateOf("Manula Kavinda") }
     var expiryDate by remember { mutableStateOf("07/23") }
     var cvc by remember { mutableStateOf("***") }
     var saveCardChecked by remember { mutableStateOf(false) }
+
+    val orderRequest by productViewModel.currentOrderRequest.observeAsState()
+
+    val context = LocalContext.current
+    val tokenFlow = TokenManager.getToken(context).collectAsState(initial = null)
+    val token = tokenFlow.value
 
     Scaffold(
         content = { paddingValues ->
@@ -136,7 +145,6 @@ fun CheckoutScreen(navController: NavController) {
                             )
                         }
                     }
-
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier.fillMaxWidth()
@@ -148,14 +156,15 @@ fun CheckoutScreen(navController: NavController) {
                         Spacer(modifier = Modifier.width(8.dp))
                         Text("Save your card information. It's confidential.", fontSize = 14.sp)
                     }
-
                     Spacer(modifier = Modifier.height(8.dp))
-
-                    // Confirm Button
                     Button(
                         onClick = {
-
-
+                            if (orderRequest != null) {
+                                if (token != null) {
+                                    productViewModel.makeOrder(token,
+                                        orderRequest!!, context, navController)
+                                }
+                            }
                         },
                         colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.onPrimaryContainer),
                         modifier = Modifier
@@ -163,7 +172,7 @@ fun CheckoutScreen(navController: NavController) {
                             .height(50.dp),
                         shape = RoundedCornerShape(10.dp),
                     ) {
-                        Text("Pay (LKR 2353.73)", color = Color.White, fontSize = 18.sp)
+                        Text("Pay (LKR ${orderRequest?.total})", color = Color.White, fontSize = 18.sp)
                     }
                 }
             }

@@ -48,6 +48,13 @@ class ProductViewModel(private val productRepository: ProductRepository) : ViewM
 
     private var rateVendorStatus = mutableStateOf<RateVendorResponse?>(null)
 
+    private val _currentOrderRequest = MutableLiveData<OrderRequest?>()
+    val currentOrderRequest: LiveData<OrderRequest?> get() = _currentOrderRequest
+
+    fun setOrderRequest(orderRequest: OrderRequest) {
+        _currentOrderRequest.value = orderRequest
+    }
+
     fun fetchProducts(token: String) {
         _products.value = Resource.Loading()
         val bearerToken = "Bearer $token"
@@ -204,7 +211,7 @@ class ProductViewModel(private val productRepository: ProductRepository) : ViewM
                     Toast.makeText(context, "Order placed successfully!", Toast.LENGTH_SHORT).show()
 
                     // Navigate to the cart screen upon success
-                    navController.navigate(AppRoutes.cartScreen)
+                    navController.navigate(AppRoutes.orderScreen)
 
                 } else {
                     Toast.makeText(context, "Failed to placed order, Please try again.", Toast.LENGTH_SHORT).show()

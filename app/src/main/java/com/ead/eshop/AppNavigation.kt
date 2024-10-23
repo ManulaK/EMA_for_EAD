@@ -112,6 +112,7 @@ fun AppNavigation(productViewModel: ProductViewModel) {
         composable(route = AppRoutes.checkoutScreen) {
             CheckoutScreen(
                 navController = navController,
+                productViewModel = productViewModel,
             )
         }
         composable(route = AppRoutes.profileScreen) {

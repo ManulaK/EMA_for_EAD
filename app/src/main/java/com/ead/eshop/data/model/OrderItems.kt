@@ -1,10 +1,9 @@
 package com.ead.eshop.data.model
 
 data class OrderItems (
-    val productId: String,
-    val quantity: Int,
-    val price: Double,
+    val ProductId: String,
+    val Quantity: Int,
+    val Price: Double,
     val vendorId: String,
-    val status: String
 )
 

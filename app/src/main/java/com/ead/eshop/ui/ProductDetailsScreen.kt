@@ -2,6 +2,7 @@ package com.ead.eshop.ui
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -70,15 +71,22 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavController
 import base64ToImageBitmap
+import coil.compose.rememberAsyncImagePainter
 import coil.compose.rememberImagePainter
+import com.ead.eshop.AppRoutes
 import com.ead.eshop.R
 import com.ead.eshop.data.model.AddToCartRequest
+import com.ead.eshop.data.model.OrderItems
+import com.ead.eshop.data.model.OrderRequest
 import com.ead.eshop.data.model.ProductByIdResponse
 import com.ead.eshop.data.model.RateVendorRequest
 import com.ead.eshop.data.model.Review
 import com.ead.eshop.utils.Resource
 import com.ead.eshop.viewmodels.ProductViewModel
 import kotlin.math.roundToInt
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
+import java.time.temporal.ChronoUnit
 
 @SuppressLint("UnusedMaterialScaffoldPaddingParameter", "UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
@@ -122,6 +130,7 @@ fun ProductDetailsScreen(
                 val imageList = List(4) { product.image }
                 var selectedPicture by remember { mutableStateOf(imageList[0]) }
                 val totalPrice = basePrice * quantity
+                Log.d("SEE HERE","$product")
 
                 Column(
                     modifier = Modifier
@@ -401,7 +410,29 @@ fun ProductDetailsScreen(
                                     .padding(start = 8.dp),
                                 shape = RoundedCornerShape(10.dp),
                                 onClick = {
-                                    // Handle Checkout action
+
+                                    // Log the product details for debugging
+                                    Log.d("Single Checkout", "$product")
+
+
+                                    val orderItem = OrderItems(
+                                        ProductId = product.id,
+                                        Quantity = quantity,
+                                        Price = product.price,
+                                        vendorId = product.vendorId
+                                    )
+
+                                    // Create the OrderRequest with this single item
+                                    val orderRequest = OrderRequest(
+                                        Items = listOf(orderItem), // Single product as a list
+                                        total = product.price * product.quantity  // Calculate the total price based on quantity
+                                    )
+
+                                    // Set the order request in the ViewModel
+                                    productViewModel.setOrderRequest(orderRequest)
+
+                                    // Navigate to the checkout screen
+                                    navController.navigate(AppRoutes.checkoutScreen)
                                 }
                             ) {
                                 Text(text = "Checkout", fontSize = 16.sp)
@@ -493,20 +524,25 @@ fun ReviewScreen(
         Divider()
         Spacer(modifier = Modifier.height(16.dp))
         if (token != null) {
-            ReviewList(productViewModel, token, productByIdResponse.vendorId, context)
+            ReviewList(productViewModel, token, productByIdResponse, context)
         }
     }
 }
 
+@SuppressLint("DefaultLocale")
 @Composable
 fun RatingSection(averageRating: Double, reviewCount: Int) {
+    val formattedRating = String.format("%.2f", averageRating)
+
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(text = averageRating.toString(), fontSize = 48.sp, fontWeight = FontWeight.Bold)
+        Text(text = formattedRating, fontSize = 48.sp, fontWeight = FontWeight.Bold)
         Row(verticalAlignment = Alignment.CenterVertically) {
+            // Round the average rating to the nearest integer for stars
+            val roundedRating = averageRating.roundToInt()
             repeat(5) {
                 Icon(
                     painter = painterResource(
-                        id = if (it < averageRating.toInt()) R.drawable.star_icon else R.drawable.star_icon
+                        id = if (it < roundedRating) R.drawable.star_icon else R.drawable.star_icon
                     ),
                     contentDescription = "Star",
                     tint = Color.Yellow
@@ -522,7 +558,6 @@ fun RatingSection(averageRating: Double, reviewCount: Int) {
         RatingBreakdown()
     }
 }
-
 @Composable
 fun RatingBreakdown() {
     val ratings = listOf(
@@ -552,12 +587,13 @@ fun RatingBreakdown() {
 }
 
 @Composable
-fun ReviewList(productViewModel: ProductViewModel, token: String, vendorId: String, context: Context) {
-    val reviews = listOf(
-        Review("Joan Perkins", 5.0, "1 day ago", "This chair is a great addition for any room in your home..."),
-        Review("Frank Garrett", 4.0, "4 days ago", "Suspendisse potenti. Nullam tincidunt lacus tellus..."),
-        Review("Randy Palmer", 4.0, "1 month ago", "Aenean ante nisi, gravida non mattis semper, varius et ligula...")
-    )
+fun ReviewList(
+    productViewModel: ProductViewModel,
+    token: String,
+    productByIdResponse: ProductByIdResponse,
+    context: Context
+) {
+    val vendorReviews = productByIdResponse.vendor.ratingsAndComments
 
     // State to manage the visibility of the dialog
     var showDialog by remember { mutableStateOf(false) }
@@ -565,9 +601,35 @@ fun ReviewList(productViewModel: ProductViewModel, token: String, vendorId: Stri
     var newComment by remember { mutableStateOf("") }
 
     Column {
-        reviews.forEach { review ->
-            ReviewItem(review)
-            Spacer(modifier = Modifier.height(8.dp))
+        vendorReviews.forEach { review ->
+            Column {
+                Text(
+                    text = "${review.customerFirstName} ${review.customerLastName}",
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.Bold
+                )
+
+                // Star rating bar
+                StarRatingBar(
+                    rating = review.rating.toFloat(),
+                    onRatingChanged = {} // Ratings are static for existing reviews
+                )
+
+                // Grey comment text
+                Text(
+                    text = review.comment,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color.Gray // Set comment color to grey
+                )
+
+                // Display human-readable createdAt date
+                Text(
+                    text = getFormattedTimeAgo(review.createdAt),
+                    style = MaterialTheme.typography.bodyMedium
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+            }
         }
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -595,14 +657,11 @@ fun ReviewList(productViewModel: ProductViewModel, token: String, vendorId: Stri
             ReviewDialog(
                 onDismiss = { showDialog = false },
                 onSubmit = { rating, comment ->
-                    // Create RateVendorRequest and call the view model function
                     val rateVendorRequest = RateVendorRequest(
                         Rating = rating.roundToInt(),
                         Comment = comment
                     )
-                    // Call the rateVendor function in the view model
-                    productViewModel.rateVendor(token, rateVendorRequest, vendorId, context)
-                    // Reset the fields and close the dialog
+                    productViewModel.rateVendor(token, rateVendorRequest, productByIdResponse.vendor.id, context)
                     newRating = 0f
                     newComment = ""
                     showDialog = false
@@ -615,6 +674,28 @@ fun ReviewList(productViewModel: ProductViewModel, token: String, vendorId: Stri
         }
     }
 }
+
+// Helper function to format the "createdAt" date
+fun getFormattedTimeAgo(createdAt: String): String {
+    val formatter = DateTimeFormatter.ISO_DATE_TIME
+    val reviewDate = LocalDateTime.parse(createdAt, formatter)
+    val now = LocalDateTime.now()
+
+    val secondsAgo = ChronoUnit.SECONDS.between(reviewDate, now)
+    val minutesAgo = ChronoUnit.MINUTES.between(reviewDate, now)
+    val hoursAgo = ChronoUnit.HOURS.between(reviewDate, now)
+    val daysAgo = ChronoUnit.DAYS.between(reviewDate, now)
+
+    return when {
+        secondsAgo < 60 -> "few seconds ago"
+        minutesAgo < 60 -> "$minutesAgo minute(s) ago"
+        hoursAgo < 24 -> "$hoursAgo hour(s) ago"
+        daysAgo == 1L -> "one day ago"
+        daysAgo < 30 -> "$daysAgo days ago"
+        else -> reviewDate.format(DateTimeFormatter.ofPattern("MMM dd, yyyy"))
+    }
+}
+
 
 @Composable
 fun ReviewDialog(
@@ -671,7 +752,7 @@ fun ReviewDialog(
 fun ReviewItem(review: Review) {
     Row(modifier = Modifier.fillMaxWidth()) {
         Image(
-            painter = rememberImagePainter(data = review.imageUrl),
+            painter = rememberAsyncImagePainter(model = review.imageUrl),
             contentDescription = "User image",
             modifier = Modifier
                 .size(48.dp)
